@@ -19,7 +19,8 @@ public class Main extends Application {
          Scene scene = new Scene(root);         
          primaryStage.setTitle("BlueMarble");         
          primaryStage.setScene(scene);
-         primaryStage.show();         
+         primaryStage.show();
+         //test
       } catch(Exception e) {
          e.printStackTrace();
       }
