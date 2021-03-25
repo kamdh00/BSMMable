@@ -101,8 +101,8 @@ public class AppController implements Initializable {
       Image img2 = new Image("file:../../resources/images/"+str[d2-1]);
       DiceImg1.setImage(img);
       DiceImg2.setImage(img2);
-      DiceText1.setText(String.valueOf(d1));
-      DiceText2.setText(String.valueOf(d2));
+//      DiceText1.setText(String.valueOf(d1));
+//      DiceText2.setText(String.valueOf(d2));
       return d1 + d2;
    }
 
