@@ -17,7 +17,7 @@ public class Main extends Application {
          AppController controller = loader.getController();
          controller.setPrimaryStage(primaryStage);
          Scene scene = new Scene(root);         
-         primaryStage.setTitle("BlueMarble");
+         primaryStage.setTitle("BlueMarble");         
          primaryStage.setScene(scene);
          primaryStage.show();         
       } catch(Exception e) {
