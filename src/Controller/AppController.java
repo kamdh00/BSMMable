@@ -48,6 +48,7 @@ public class AppController implements Initializable {
    private static int RIGHT = 3;
    int position = BOTTOM;
    int d;
+   int d1,d2;
    private Stage primaryStage;   
    @Override
    public void initialize(URL location, ResourceBundle resources) {
@@ -58,6 +59,7 @@ public class AppController implements Initializable {
 
    
    public void dialogTest(ActionEvent e){
+<<<<<<< HEAD
       int t=diceAction();
       Thread thread = new Thread() {         
          @Override
@@ -87,6 +89,61 @@ public class AppController implements Initializable {
       
       thread.setDaemon(true);
       thread.start();
+=======
+	   Random random = new Random();
+		String[] str = { "dice1.JPG", "dice2.JPG", "dice3.JPG", "dice4.JPG", "dice5.JPG", "dice6.JPG" };
+		
+		Thread thread = new Thread() {
+			@Override
+			public void run() {
+				Platform.runLater(() -> {
+					d1 = random.nextInt(6) + 1;
+					d2 = random.nextInt(6) + 1;
+											
+				});				
+				Platform.runLater(() -> {
+					
+					Image img = new Image("file:../../resources/images/" + str[d1 - 1]);
+					Image img2 = new Image("file:../../resources/images/" + str[d2 - 1]);
+					DiceImg1.setImage(img);
+					DiceImg2.setImage(img2);						
+				});	
+				btn1.setDisable(true);
+				for (int i = 0; i < d1+d2; i++) {
+					Platform.runLater(() -> {
+
+						setPosition(C1.getLayoutX(), C1.getLayoutY());
+					});
+					try {
+						Thread.sleep(100);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+				}
+				btn1.setDisable(false);
+				Platform.runLater(() -> {
+					Stage dialog = new Stage(StageStyle.UTILITY);
+					dialog.initModality(Modality.WINDOW_MODAL);
+					dialog.initOwner(primaryStage);
+					dialog.setTitle("확인");
+					AnchorPane anchorPane = null;
+					try {
+						anchorPane = (AnchorPane) FXMLLoader.load(getClass().getResource("dialogtest.fxml"));
+					} catch (IOException e2) {
+						e2.printStackTrace();
+					}
+					Scene scene = new Scene(anchorPane);
+					dialog.setScene(scene);
+					dialog.show();
+				});
+
+			}
+
+		};
+
+		thread.setDaemon(true);
+		thread.start();
+>>>>>>> refs/remotes/origin/qwe
       
    }
 
