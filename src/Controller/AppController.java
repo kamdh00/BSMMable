@@ -81,8 +81,6 @@ public class AppController implements Initializable {
                 dialog.setScene(scene);
                 dialog.show();
             });
-             
-            
          }
          
       };
