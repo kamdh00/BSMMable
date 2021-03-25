@@ -74,7 +74,7 @@ public class AppController implements Initializable {
             Platform.runLater(()->{
                Stage dialog = new Stage(StageStyle.UTILITY);
                 dialog.initModality(Modality.WINDOW_MODAL); dialog.initOwner(primaryStage);
-                dialog.setTitle("»Æ¿Œ"); AnchorPane anchorPane = null; try { anchorPane =
+                dialog.setTitle("ÌôïÏù∏"); AnchorPane anchorPane = null; try { anchorPane =
                 (AnchorPane) FXMLLoader.load(getClass().getResource("dialogtest.fxml")); }
                 catch (IOException e2) { e2.printStackTrace(); } Scene scene = new
                 Scene(anchorPane);
