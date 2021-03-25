@@ -20,7 +20,7 @@ public class Main extends Application {
          primaryStage.setTitle("BlueMarble");         
          primaryStage.setScene(scene);
          primaryStage.show();
-         //test
+         //testasdasdad
       } catch(Exception e) {
          e.printStackTrace();
       }
