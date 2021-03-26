@@ -13,7 +13,6 @@ import javafx.fxml.Initializable;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -46,7 +45,8 @@ public class AppController implements Initializable {
 	ArrayList<PieceXY> pieceXY=new ArrayList<PieceXY>();	
 	ArrayList<PlanetData> planetData = new ArrayList<PlanetData>();
 	@Override
-	public void initialize(URL location, ResourceBundle resources) {		
+	public void initialize(URL location, ResourceBundle resources) {
+		Money1.setText("보유금액:"+money+"원");
 		btn1.setOnAction((event) -> rollTheDice(event));		
 	}
 	public void rollTheDice(ActionEvent e) {		
@@ -147,7 +147,7 @@ public class AppController implements Initializable {
 		Button Complete = (Button) anchorPane.lookup("#Complete");		
 		Complete.setOnAction(event->dialog.close());
 		
-		if(money < price) {			
+		if(money < price) {
 			MyMoney.setText("보유금액:"+money+"원");
 		}else {
 			BuyMessage.setText("구매 완료하였습니다.");
@@ -171,6 +171,8 @@ public class AppController implements Initializable {
 		position++;
 		if(position==pieceXY.size()) {
 			position=0;
+			money += 200000;
+			Money1.setText("보유금액:"+money+"원");
 		}
 	}
 
