@@ -1,8 +1,29 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
 <?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.text.Font?>
 
-
-<AnchorPane prefHeight="400.0" prefWidth="600.0" xmlns:fx="http://javafx.com/fxml" xmlns="http://javafx.com/javafx">
-	<!-- TODO Add Nodes -->
+<AnchorPane prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/15.0.1" xmlns:fx="http://javafx.com/fxml/1">
+   <children>
+      <Button id="BuyPlanet" layoutX="240.0" layoutY="235.0" mnemonicParsing="false" prefHeight="22.0" prefWidth="121.0" text="구매" />
+      <Button id="CostPlanet" layoutX="180.0" layoutY="332.0" mnemonicParsing="false" prefHeight="22.0" prefWidth="121.0" text="금액" />
+      <Button id="Complete" layoutX="301.0" layoutY="332.0" mnemonicParsing="false" prefHeight="22.0" prefWidth="121.0" text="확인" />
+      <Label id="PlanetName" alignment="CENTER" layoutX="36.0" layoutY="71.0" prefHeight="22.0" prefWidth="165.0" text="test">
+         <font>
+            <Font size="18.0" />
+         </font>
+      </Label>
+      <Label id="PlanetOwner" alignment="CENTER" layoutX="36.0" layoutY="110.0" prefHeight="22.0" prefWidth="165.0" text="test">
+         <font>
+            <Font size="18.0" />
+         </font>
+      </Label>
+      <Label id="PlanetData" alignment="CENTER" layoutX="36.0" layoutY="148.0" prefHeight="22.0" prefWidth="165.0" text="test">
+         <font>
+            <Font size="18.0" />
+         </font>
+      </Label>
+   </children>
 </AnchorPane>

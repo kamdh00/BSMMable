@@ -2,117 +2,68 @@ package Controller;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Random;
 import java.util.ResourceBundle;
-
 import javafx.application.Platform;
-import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextArea;
+import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.shape.Circle;
-import javafx.scene.text.Text;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
 
 public class AppController implements Initializable {
-   @FXML
-   Button btn1;
-   @FXML
-   Circle C1;
-   @FXML
-   StackPane Dice1;
-   @FXML
-   StackPane Dice2;
-   @FXML
-   ImageView DiceImg1;
-   @FXML
-   ImageView DiceImg2;
-   @FXML
-   Text DiceText1;
-   @FXML
-   Text DiceText2;
-
-   private static int TOP = 0;
-   private static int LEFT = 1;
-   private static int BOTTOM = 2;
-   private static int RIGHT = 3;
-   int position = BOTTOM;
-   int d;
-   int d1,d2;
-   private Stage primaryStage;   
-   @Override
-   public void initialize(URL location, ResourceBundle resources) {
-      btn1.setOnAction((event) ->dialogTest(event)); 
-      
-      
-   }
-
-   
-   public void dialogTest(ActionEvent e){
-<<<<<<< HEAD
-      int t=diceAction();
-      Thread thread = new Thread() {         
-         @Override
-         public void run() {   
-            btn1.setDisable(true);
-            for (int i = 0; i < t; i++) {
-               Platform.runLater(()->{
-                  
-                  setPosition(C1.getLayoutX(), C1.getLayoutY());
-               });
-               try {Thread.sleep(100);} catch (InterruptedException e) {e.printStackTrace();}
-            }
-            btn1.setDisable(false);
-            Platform.runLater(()->{
-               Stage dialog = new Stage(StageStyle.UTILITY);
-                dialog.initModality(Modality.WINDOW_MODAL); dialog.initOwner(primaryStage);
-                dialog.setTitle("확인"); AnchorPane anchorPane = null; try { anchorPane =
-                (AnchorPane) FXMLLoader.load(getClass().getResource("dialogtest.fxml")); }
-                catch (IOException e2) { e2.printStackTrace(); } Scene scene = new
-                Scene(anchorPane);
-                dialog.setScene(scene);
-                dialog.show();
-            });
-         }
-         
-      };
-      
-      thread.setDaemon(true);
-      thread.start();
-=======
-	   Random random = new Random();
-		String[] str = { "dice1.JPG", "dice2.JPG", "dice3.JPG", "dice4.JPG", "dice5.JPG", "dice6.JPG" };
-		
+	@FXML	Button btn1;
+	@FXML	Circle C1;
+	@FXML	StackPane Dice1;
+	@FXML	StackPane Dice2;	
+	@FXML	ImageView DiceImg1;
+	@FXML	ImageView DiceImg2;
+	@FXML	TextField Money1;
+	
+	private static int TOP = 0;
+	private static int LEFT = 1;
+	private static int BOTTOM = 2;
+	private static int RIGHT = 3;
+	private static int money = 3000000;
+	int position = 0;	
+	int d1;
+	int d2;
+	private Stage primaryStage;
+	ArrayList<PieceXY> pieceXY=new ArrayList<PieceXY>();	
+	ArrayList<PlanetData> planetData = new ArrayList<PlanetData>();
+	@Override
+	public void initialize(URL location, ResourceBundle resources) {		
+		btn1.setOnAction((event) -> rollTheDice(event));		
+	}
+	public void rollTheDice(ActionEvent e) {		
 		Thread thread = new Thread() {
+			
 			@Override
 			public void run() {
 				Platform.runLater(() -> {
-					d1 = random.nextInt(6) + 1;
-					d2 = random.nextInt(6) + 1;
-											
+					setDice();											
 				});				
 				Platform.runLater(() -> {
-					
-					Image img = new Image("file:../../resources/images/" + str[d1 - 1]);
-					Image img2 = new Image("file:../../resources/images/" + str[d2 - 1]);
-					DiceImg1.setImage(img);
-					DiceImg2.setImage(img2);						
+					setDiceImage();											
 				});	
 				btn1.setDisable(true);
 				for (int i = 0; i < d1+d2; i++) {
 					Platform.runLater(() -> {
-
-						setPosition(C1.getLayoutX(), C1.getLayoutY());
+						setPosition();
 					});
 					try {
 						Thread.sleep(100);
@@ -122,73 +73,170 @@ public class AppController implements Initializable {
 				}
 				btn1.setDisable(false);
 				Platform.runLater(() -> {
-					Stage dialog = new Stage(StageStyle.UTILITY);
-					dialog.initModality(Modality.WINDOW_MODAL);
-					dialog.initOwner(primaryStage);
-					dialog.setTitle("확인");
-					AnchorPane anchorPane = null;
-					try {
-						anchorPane = (AnchorPane) FXMLLoader.load(getClass().getResource("dialogtest.fxml"));
-					} catch (IOException e2) {
-						e2.printStackTrace();
-					}
-					Scene scene = new Scene(anchorPane);
-					dialog.setScene(scene);
-					dialog.show();
+					showDialog();
 				});
 
 			}
 
-		};
-
-		thread.setDaemon(true);
+		};		
+		thread.setDaemon(true);		
 		thread.start();
->>>>>>> refs/remotes/origin/qwe
-      
-   }
+	}
+	public void setDice() {		
+		Random random = new Random();
+		d1 = random.nextInt(6) + 1;
+		d2 = random.nextInt(6) + 1;
+	}
+	public void setDiceImage() {		
+		String[] str = { "dice1.PNG", "dice2.PNG", "dice3.PNG", "dice4.PNG", "dice5.PNG", "dice6.PNG" };
+		Image img = new Image("file:../../resources/images/" + str[d1 - 1]);
+		Image img2 = new Image("file:../../resources/images/" + str[d2 - 1]);
+		DiceImg1.setImage(img);
+		DiceImg2.setImage(img2);
+	}
+	public void showDialog() {
+		Stage dialog = new Stage(StageStyle.UTILITY);
+		dialog.initModality(Modality.WINDOW_MODAL);
+		dialog.initOwner(primaryStage);
+		dialog.setTitle("확인");
+		AnchorPane anchorPane = null;
+		try {
+			anchorPane = (AnchorPane) FXMLLoader.load(getClass().getResource("dialogtest.fxml"));
+		} catch (IOException e2) {
+			e2.printStackTrace();
+		}
+		Button Complete = (Button) anchorPane.lookup("#Complete");		
+		Complete.setOnAction(event->dialog.close());
+		Button BuyPlanet = (Button) anchorPane.lookup("#BuyPlanet");
+		Label PlanetName = (Label) anchorPane.lookup("#PlanetName");
+		Label PlanetOwner = (Label) anchorPane.lookup("#PlanetOwner");
+		Label PlanetData = (Label) anchorPane.lookup("#PlanetData");
+		String name = planetData.get(position-1).name;
+		String owner = planetData.get(position-1).owner;
+		String data = planetData.get(position-1).data;
+		int price = planetData.get(position-1).price;
+		PlanetName.setText(name);
+		PlanetOwner.setText(owner);
+		PlanetData.setText(data);		
+		if(!owner.equals("X") || price == 0) {
+			BuyPlanet.setVisible(false);
+		}
+		BuyPlanet.setOnAction(event->BuyLand(price));
+		Scene scene = new Scene(anchorPane);		
+		dialog.setScene(scene);
+		dialog.show();
+		
+	}
+	
+	public void BuyLand(int price) {
+		Stage dialog = new Stage(StageStyle.UTILITY);
+		dialog.initModality(Modality.WINDOW_MODAL);
+		dialog.initOwner(primaryStage);
+		dialog.setTitle("구매 확인");
+		AnchorPane anchorPane = null;
+		
+		try {
+			anchorPane = (AnchorPane) FXMLLoader.load(getClass().getResource("dialog2.fxml"));
+		} catch (IOException e2) {
+			e2.printStackTrace();
+		}
+		
+		Label BuyMessage = (Label) anchorPane.lookup("#BuyMessage");
+		Label MyMoney = (Label) anchorPane.lookup("#MyMoney");
+		
+		Button Complete = (Button) anchorPane.lookup("#Complete");		
+		Complete.setOnAction(event->dialog.close());
+		
+		if(money < price) {			
+			MyMoney.setText("보유금액:"+money+"원");
+		}else {
+			BuyMessage.setText("구매 완료하였습니다.");
+			money -= price;
+			MyMoney.setText("보유금액:"+money+"원");
+			Money1.setText("보유금액:"+money+"원");
+		}
+		
+		Scene scene = new Scene(anchorPane);		
+		dialog.setScene(scene);
+		dialog.show();
+	}
+	
+	public void setPlanetData() {
+				
+		
+	}
+	public void setPosition() {
+		C1.setLayoutX(pieceXY.get(position).pieceX);
+		C1.setLayoutY(pieceXY.get(position).pieceY);
+		position++;
+		if(position==pieceXY.size()) {
+			position=0;
+		}
+	}
 
-   public int diceAction() {
-      Random random = new Random();
-      String[] str= {"dice1.JPG","dice2.JPG","dice3.JPG","dice4.JPG","dice5.JPG","dice6.JPG"};      
-      int d1 = random.nextInt(6) + 1;
-      int d2 = random.nextInt(6) + 1;
-      Image img = new Image("file:../../resources/images/"+str[d1-1]);
-      Image img2 = new Image("file:../../resources/images/"+str[d2-1]);
-      DiceImg1.setImage(img);
-      DiceImg2.setImage(img2);
-//      DiceText1.setText(String.valueOf(d1));
-//      DiceText2.setText(String.valueOf(d2));
-      return d1 + d2;
-   }
+	public void setPrimaryStage(Stage primaryStage) {
+		this.primaryStage = primaryStage;
 
-   public void setPosition(double curX, double curY) {
-      if (position == BOTTOM) {
-         C1.setLayoutX(curX - (890 - 140) / 9);
-         if ((C1.getLayoutX() - (890 - 140) / 9) < 0) {
-            position = LEFT;
-         }
-      } else if (position == LEFT) {
-         C1.setLayoutY(curY - (610 - 220) / 5);
-         if ((C1.getLayoutY() - (610 - 220) / 5) < 110) {
-            position = TOP;
-         }
-      } else if (position == TOP) {
-         C1.setLayoutX(curX + (890 - 140) / 9);
-         if ((C1.getLayoutX() + (890 - 140) / 9) > 890) {
-            position = RIGHT;
-         }
-      } else if (position == RIGHT) {
-         C1.setLayoutY(curY + (610 - 220) / 5);
-         if ((C1.getLayoutY() + (610 - 220) / 5) > 500) {
-            position = BOTTOM;
-         }
-      }
-   }
-   public void setPrimaryStage(Stage primaryStage) {
-      this.primaryStage = primaryStage;
-      
-   }
-   
-   
+	}
+	public AppController() {
+		pieceXY.add(new PieceXY(740, 505));
+		pieceXY.add(new PieceXY(655, 505));
+		pieceXY.add(new PieceXY(572, 505));
+		pieceXY.add(new PieceXY(487, 505));
+		pieceXY.add(new PieceXY(405, 505));
+		pieceXY.add(new PieceXY(320, 505));
+		pieceXY.add(new PieceXY(237, 505));		
+		pieceXY.add(new PieceXY(155, 505));
+		pieceXY.add(new PieceXY(70, 505));
+		pieceXY.add(new PieceXY(70, 425));
+		pieceXY.add(new PieceXY(70, 348));
+		pieceXY.add(new PieceXY(70, 266));
+		pieceXY.add(new PieceXY(70, 186));
+		pieceXY.add(new PieceXY(70, 105));		
+		pieceXY.add(new PieceXY(155, 105));
+		pieceXY.add(new PieceXY(237, 105));
+		pieceXY.add(new PieceXY(320, 105));
+		pieceXY.add(new PieceXY(405, 105));
+		pieceXY.add(new PieceXY(487, 105));
+		pieceXY.add(new PieceXY(572, 105));
+		pieceXY.add(new PieceXY(655, 105));
+		pieceXY.add(new PieceXY(740, 105));
+		pieceXY.add(new PieceXY(822, 105));
+		pieceXY.add(new PieceXY(822, 186));
+		pieceXY.add(new PieceXY(822, 266));
+		pieceXY.add(new PieceXY(822, 348));		
+		pieceXY.add(new PieceXY(822, 425));		
+		pieceXY.add(new PieceXY(822, 505));
+				
+		planetData.add(new PlanetData("비밀카드", "X", "X", 0));
+		planetData.add(new PlanetData("화성", "X", "20만원", 200000));
+		planetData.add(new PlanetData("목성", "X", "15만원", 150000));
+		planetData.add(new PlanetData("비밀카드", "X", "X", 0));
+		planetData.add(new PlanetData("토성", "X", "8만원", 80000));
+		planetData.add(new PlanetData("천왕성", "X", "13만원", 130000));
+		planetData.add(new PlanetData("해왕성", "X", "25만원", 250000));
+		planetData.add(new PlanetData("물병자리", "X", "12만원", 120000));
+		planetData.add(new PlanetData("워프", "X", "이동", 0));
+		planetData.add(new PlanetData("명왕성", "X", "40만원", 400000));
+		planetData.add(new PlanetData("비밀카드", "X", "X", 0));
+		planetData.add(new PlanetData("안드로메다", "X", "45만원", 450000));
+		planetData.add(new PlanetData("북극성", "X", "44만원", 440000));
+		planetData.add(new PlanetData("블랙홀", "X", "2턴 멈춤", 0));
+		planetData.add(new PlanetData("비밀카드", "X", "X", 0));
+		planetData.add(new PlanetData("달", "X", "100만원", 1000000));
+		planetData.add(new PlanetData("비밀카드", "X", "X", 0));
+		planetData.add(new PlanetData("태양", "X", "120만원", 1200000));
+		planetData.add(new PlanetData("시리우스", "X", "90만원", 900000));
+		planetData.add(new PlanetData("프로키온", "X", "95만원", 950000));
+		planetData.add(new PlanetData("비밀카드", "X", "X", 0));
+		planetData.add(new PlanetData("베크록스", "X", "80만원", 800000));
+		planetData.add(new PlanetData("조난기지", "X", "1턴멈춤 기부 50만원", 500000));
+		planetData.add(new PlanetData("아크록스", "X", "65만원", 650000));
+		planetData.add(new PlanetData("비밀카드", "X", "X", 0));
+		planetData.add(new PlanetData("수성", "X", "55만원", 550000));
+		planetData.add(new PlanetData("금성", "X", "60만원", 600000));
+		planetData.add(new PlanetData("지구", "X", "수고비 20만원", 200000));		
+		
+	}
 
 }

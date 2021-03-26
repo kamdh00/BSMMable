@@ -12,15 +12,14 @@ public class Main extends Application {
 	@Override
    public void start(Stage primaryStage) {
       try {         
-         FXMLLoader loader= new FXMLLoader(getClass().getResource("root.fxml"));
-         Parent root = loader.load();         
-         AppController controller = loader.getController();
-         controller.setPrimaryStage(primaryStage);
-         Scene scene = new Scene(root);         
-         primaryStage.setTitle("BlueMarble");         
-         primaryStage.setScene(scene);
-         primaryStage.show();
-         //testasdasdad
+    	  FXMLLoader loader= new FXMLLoader(getClass().getResource("Root.fxml"));
+    	  Parent root = loader.load();
+    	  AppController controller = loader.getController();
+    	  controller.setPrimaryStage(primaryStage);
+    	  Scene scene = new Scene(root);			
+    	  primaryStage.setTitle("BlueMarble");
+    	  primaryStage.setScene(scene);
+    	  primaryStage.show();
       } catch(Exception e) {
          e.printStackTrace();
       }

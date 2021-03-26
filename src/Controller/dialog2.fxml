@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane prefHeight="136.0" prefWidth="215.0" xmlns="http://javafx.com/javafx/15.0.1" xmlns:fx="http://javafx.com/fxml/1">
+   <children>
+      <Button id="Complete" layoutX="47.0" layoutY="81.0" mnemonicParsing="false" prefHeight="22.0" prefWidth="121.0" text="확인" />
+      <Label id="BuyMessage" alignment="CENTER" layoutX="3.0" layoutY="14.0" prefHeight="23.0" prefWidth="208.0" text="금액이 부족합니다.">
+         <font>
+            <Font size="18.0" />
+         </font>
+      </Label>
+      <Label id="MyMoney" alignment="CENTER" layoutX="3.0" layoutY="44.0" prefHeight="22.0" prefWidth="165.0">
+         <font>
+            <Font size="18.0" />
+         </font>
+      </Label>
+   </children>
+</AnchorPane>
