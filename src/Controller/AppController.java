@@ -104,7 +104,7 @@ public class AppController implements Initializable {
 
 				});
 				try {
-					Thread.sleep(50 * (d1 + d2) + 300);
+					Thread.sleep(150 * (d1 + d2) + 300);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
