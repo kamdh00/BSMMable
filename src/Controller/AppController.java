@@ -69,7 +69,7 @@ public class AppController implements Initializable {
 
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {
-		Money1.setText("보유금액 : " + money + "원");
+		Money1.setText("** 보유금액 : " + money + "원 **");
 		Money1.setEditable(false);
 		btn1.setOnAction((event) -> rollTheDice(event));
 	}
