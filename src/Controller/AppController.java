@@ -158,7 +158,7 @@ public class AppController implements Initializable {
 
 			if (money < price) {
 				BuyMessage.setText("보유금액이 부족합니다.");
-				MyMoney.setText("보유금액 : " + money + "원");
+				MyMoney.setText("** 보유금액 : " + money + "원 **");
 			} else {
 				BuyMessage.setText(name + "의 통행료 " + price + "원을 지불을 하였습니다.");
 				money -= price;
