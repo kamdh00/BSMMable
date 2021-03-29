@@ -4,18 +4,18 @@ import Controller.AppController;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.stage.Stage;
-import javafx.scene.Parent;
+import javafx.scene.layout.AnchorPane;
 import javafx.scene.Scene;
-
 
 public class Main extends Application {
 	@Override
    public void start(Stage primaryStage) {
       try {         
     	  FXMLLoader loader= new FXMLLoader(getClass().getResource("Root.fxml"));
-    	  Parent root = loader.load();
+    	  AnchorPane root = loader.load();
     	  AppController controller = loader.getController();
     	  controller.setPrimaryStage(primaryStage);
+    	  controller.setRoot(root);
     	  Scene scene = new Scene(root);			
     	  primaryStage.setTitle("BlueMarble");
     	  primaryStage.setScene(scene);

@@ -22,5 +22,6 @@
          </image>
       </ImageView>      
       <TextField fx:id="Money1" />
+      <Circle fx:id="C2" fill="#ff1f1f" layoutX="819.0" layoutY="522.0" radius="17.0" stroke="BLACK" strokeType="INSIDE" />
    </children>
 </AnchorPane>

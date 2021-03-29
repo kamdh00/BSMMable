@@ -5,11 +5,15 @@ public class PlanetData {
 	String owner;
 	String data;
 	int price;
-	public PlanetData(String name, String owner, String data, int price) {
+	int building;
+	int count;
+	public PlanetData(String name, String owner, String data, int price, int building, int count) {
 		this.name = name;
 		this.owner = owner;
 		this.data = data;
 		this.price = price;
+		this.building = building;
+		this.count = count;
 	}
 	public String getName() {
 		return name;
@@ -34,6 +38,12 @@ public class PlanetData {
 	}
 	public void setPrice(int price) {
 		this.price = price;
+	}
+	public int getBuilding() {
+		return building;
+	}
+	public void setBuilding(int building) {
+		this.building = building;
 	}	
 	
 }

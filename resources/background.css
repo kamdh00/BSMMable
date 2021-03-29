@@ -1,5 +1,5 @@
 .bodybg{
-	-fx-background-image:  url('./images/bsmBackground.jpg');
+	-fx-background-image:  url('./images/bsmBackground.png');
 	-fx-background-size: contain;
 	-fx-width: auto;
 	-fx-height: auto;
