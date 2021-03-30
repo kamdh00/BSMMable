@@ -7,10 +7,11 @@
 
 <AnchorPane prefHeight="188.0" prefWidth="347.0" xmlns="http://javafx.com/javafx/15.0.1" xmlns:fx="http://javafx.com/fxml/1">
    <children>
-      <ChoiceBox layoutX="176.0" layoutY="25.0" prefWidth="150.0" />
-      <ChoiceBox layoutX="176.0" layoutY="83.0" prefWidth="150.0" />
-      <Button id="Complete" contentDisplay="CENTER" layoutX="115.0" layoutY="137.0" mnemonicParsing="false" prefHeight="22.0" prefWidth="121.0" text="확인" textAlignment="CENTER" />
-      <Label layoutX="41.0" layoutY="25.0" prefHeight="22.0" prefWidth="109.0" text="내땅 선택 : " />
+      <ChoiceBox id="myLand" layoutX="176.0" layoutY="25.0" prefWidth="150.0" />
+      <ChoiceBox id="yourLand" layoutX="176.0" layoutY="83.0" prefWidth="150.0" />
+      <Button id="choiceLand" contentDisplay="CENTER" layoutX="29.0" layoutY="137.0" mnemonicParsing="false" prefHeight="22.0" prefWidth="121.0" text="선택완료" textAlignment="CENTER" />
+      <Button id="Complete" contentDisplay="CENTER" layoutX="199.0" layoutY="137.0" mnemonicParsing="false" prefHeight="22.0" prefWidth="121.0" text="닫기" textAlignment="CENTER" />
+      <Label id="myLandLabel" layoutX="41.0" layoutY="25.0" prefHeight="22.0" prefWidth="109.0" text="내땅 선택 : " />
       <Label layoutX="41.0" layoutY="82.0" prefHeight="22.0" prefWidth="109.0" text="상대땅 선택 : " />
    </children>
 </AnchorPane>
