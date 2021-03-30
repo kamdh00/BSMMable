@@ -37,10 +37,9 @@ import javafx.util.Duration;
 public class AppController implements Initializable {
 	@FXML
 	Button btn1;
+	Button BuyPlanet, CostPlanet;
 	@FXML
-	Button BuyPlanet;
-	@FXML
-	Circle C1,C2;
+	Circle C1, C2;
 	@FXML
 	StackPane Dice1;
 	@FXML
@@ -50,40 +49,42 @@ public class AppController implements Initializable {
 	@FXML
 	ImageView DiceImg2;
 	@FXML
-	TextField Money1;
-
+	TextField Money1, Money2;
+	Label PlanetOwner;
 	private static int TOP = 0;
 	private static int LEFT = 1;
 	private static int BOTTOM = 2;
 	private static int RIGHT = 3;
-	int posi[] = {BOTTOM,BOTTOM};
-	private static int money = 3000000;
-	private static String user[] = {"kam","yoo"}; // 임시로 하드코딩 추후 로그인 한 사용자를 Main에서 받는것으로 대체 필요
-	int position[] = {0,0};	
+	int posi[] = { BOTTOM, BOTTOM };
+	private static int money[] = { 3000000, 3000000 };
+	private static String user[] = { "kam", "yoo" }; // 임시로 하드코딩 추후 로그인 한 사용자를 Main에서 받는것으로 대체 필요
+	int position[] = { 0, 0 };
 	int d1;
 	int d2;
 
-	int cntX[] = {0,0};
-	int cntY[] = {0,0};
+	int cntX[] = { 0, 0 };
+	int cntY[] = { 0, 0 };
 	int buy[];
 	int turn = 0;
+	int curturn = 0;
 	private Stage primaryStage;
 	private AnchorPane root;
 	ArrayList<PieceXY> pieceXY = new ArrayList<PieceXY>();
 	ArrayList<PlanetData> planetData = new ArrayList<PlanetData>();
 	PathTransition pathTransition = new PathTransition();
 	Path path;
-	
-	Queue<Integer> randQueue = new LinkedList<Integer>();	// 카드 이미지 번호 랜덤으로 저장
+
+	Queue<Integer> randQueue = new LinkedList<Integer>(); // 카드 이미지 번호 랜덤으로 저장
 	Random rand = new Random();
-	
 
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {
 		setSecretCard();
-		
-		Money1.setText("보유금액 : " + money + "원");
+
+		Money1.setText("보유금액 : " + money[0] + "원");
 		Money1.setEditable(false);
+		Money2.setText("보유금액 : " + money[1] + "원");
+		Money2.setEditable(false);
 		btn1.setOnAction((event) -> rollTheDice(event));
 	}
 
@@ -112,12 +113,10 @@ public class AppController implements Initializable {
 					}
 					pathTransition.setDuration(Duration.millis(150 * (d1 + d2)));
 					pathTransition.setPath(path);
-					if(turn==0)
-					{
-						pathTransition.setNode(C1);						
-					}
-					else {
-						pathTransition.setNode(C2);						
+					if (turn == 0) {
+						pathTransition.setNode(C1);
+					} else {
+						pathTransition.setNode(C2);
 					}
 					pathTransition.play();
 
@@ -131,11 +130,11 @@ public class AppController implements Initializable {
 				Platform.runLater(() -> {
 					btn1.setDisable(false);
 					showDialog();
-					if (turn==0) {
-						turn=1;
-					}
-					else {
-						turn=0;
+					curturn = turn;
+					if (turn == 0) {
+						turn = 1;
+					} else {
+						turn = 0;
 					}
 				});
 			}
@@ -147,15 +146,15 @@ public class AppController implements Initializable {
 
 	public void setSecretCard() {
 		int count = 0;
-		while(count < 30) {
+		while (count < 30) {
 			int check = rand.nextInt(30);
-			if(!randQueue.contains(check)) {
+			if (!randQueue.contains(check)) {
 				randQueue.add(check);
 				count++;
 			}
 		}
 	}
-	
+
 	public void setDice() {
 		Random random = new Random();
 		d1 = random.nextInt(6) + 1;
@@ -169,56 +168,73 @@ public class AppController implements Initializable {
 		DiceImg1.setImage(img);
 		DiceImg2.setImage(img2);
 	}
-	
+
 	/*
-	 * 카드 번호에 따라 실행되는 동작 함수 
-	*/
-	public void actionSecretCard(int num) {
-		switch(num) {
-			case 0:	// 소유한 본인땅의 모든 건물 삭제				
-				for(int i=0;i<planetData.size();i++) {
-					if(user.equals(planetData.get(i).name)) {
-						PlanetData pd = new PlanetData(planetData.get(i).name, user[turn], planetData.get(i).data, planetData.get(i).price,0,planetData.get(i).count);
-						planetData.set(i,pd);
-					}
+	 * 카드 번호에 따라 실행되는 동작 함수
+	 */
+	public void actionSecretCard(int num, int turn) {
+		switch (num) {
+		case 0: // 소유한 본인땅의 모든 건물 삭제
+			for (int i = 0; i < planetData.size(); i++) {
+				if (user[turn].equals(planetData.get(i).name)) {
+					PlanetData pd = new PlanetData(planetData.get(i).name, user[turn], planetData.get(i).data,
+							planetData.get(i).price, planetData.get(i).count);
+					planetData.set(i, pd);
 				}
-				break;
-			case 1:	// 후원금 30만원 받음
-				money += 300000;
-				Money1.setText("보유금액 : " + money + "원");
-				break;
-			case 2:	// 상대방에게 돈 30만원 뺏어옴
-				money += 300000;
-				Money1.setText("보유금액 : " + money + "원");
-				// 상대편 금액 -30만원 로직 추가해야함. socket으로 -30만원 전송
-				break;
-			case 3:	// 상대땅 하나 가져오기
-				takeLand();
-				break;
-			default:
-				money += 1000000;
-				Money1.setText("보유금액 : " + money + "원");
-				break;
+			}
+			break;
+		case 1: // 후원금 30만원 받음
+			money[turn] += 300000;
+			if (turn == 0) {
+				Money1.setText("보유금액 : " + money[turn] + "원");
+			} else {
+				Money2.setText("보유금액 : " + money[turn] + "원");
+			}
+			break;
+		case 2: // 상대방에게 돈 30만원 뺏어옴
+			money[turn] += 300000;
+			if (turn == 0) {
+				Money1.setText("보유금액 : " + money[turn] + "원");
+			} else {
+				Money2.setText("보유금액 : " + money[turn] + "원");
+			}
+			// 상대편 금액 -30만원 로직 추가해야함. socket으로 -30만원 전송
+			break;
+		case 3: // 상대땅 하나 가져오기
+			takeLand();
+			break;
+		default:
+			money[turn] += 1000000;
+			if (turn == 0) {
+				Money1.setText("보유금액 : " + money[turn] + "원");
+			} else {
+				Money2.setText("보유금액 : " + money[turn] + "원");
+			}
+			break;
 		}
-		
+
 	}
 
 	public void showDialog() {
-		String name = planetData.get(position[turn]).name;
-		String owner = planetData.get(position[turn]).owner;
-		String data = planetData.get(position[turn]).data;
-		int price = planetData.get(position[turn]).price;
-		int building = planetData.get(position[turn]).building;
-		int count = planetData.get(position[turn]).count;
-		int tmp = turn;
-		
+		curturn = turn;
+		String name = planetData.get(position[curturn]).name;
+		String owner = planetData.get(position[curturn]).owner;
+		String data = planetData.get(position[curturn]).data;
+		int price = planetData.get(position[curturn]).price;
+
+		int count = planetData.get(position[curturn]).count;
+
 		AnchorPane anchorPane = null;
 		Stage dialog = new Stage(StageStyle.UTILITY);
+		Stage dialog2 = new Stage(StageStyle.UTILITY);
 		dialog.initModality(Modality.WINDOW_MODAL);
 		dialog.initOwner(primaryStage);
 		dialog.setTitle("확인");
+		dialog2.initModality(Modality.WINDOW_MODAL);
+		dialog2.initOwner(primaryStage);
+		dialog2.setTitle("확인");
 
-		if (!owner.equals(user[turn]) && !owner.equals("X") && price != 0) { // 내 땅이 아니면 이용료 지불
+		if (!owner.equals(user[curturn]) && !owner.equals("X") && price != 0) { // 내 땅이 아니면 이용료 지불
 
 			try {
 				anchorPane = (AnchorPane) FXMLLoader.load(getClass().getResource("dialog2.fxml"));
@@ -229,14 +245,64 @@ public class AppController implements Initializable {
 			Label BuyMessage = (Label) anchorPane.lookup("#BuyMessage");
 			Label MyMoney = (Label) anchorPane.lookup("#MyMoney");
 
-			if (money < price) {
+			if (money[curturn] < price + (price / 2) * (count - 1)) {
 				BuyMessage.setText("보유금액이 부족합니다.");
-				MyMoney.setText("보유금액 : " + money + "원");
+				MyMoney.setText("보유금액 : " + money[curturn] + "원");
 			} else {
-				BuyMessage.setText(name + "의 통행료 " + price + "원을 지불을 하였습니다.");
-				money -= price;
-				MyMoney.setText("보유금액 : " + money + "원");
-				Money1.setText("보유금액 : " + money + "원");
+				if (count == 1) {
+					BuyMessage.setText(name + "의 통행료 " + price + "원을 지불을 하였습니다.");
+					money[curturn] -= price;
+					MyMoney.setText("보유금액 : " + money[curturn] + "원");
+					if (curturn == 0) {
+						money[1] += price;
+						Money1.setText("보유금액 : " + money[0] + "원");
+						Money2.setText("보유금액 : " + money[1] + "원");
+					} else {
+						money[0] += price;
+						Money1.setText("보유금액 : " + money[0] + "원");
+						Money2.setText("보유금액 : " + money[1] + "원");
+					}
+				} else if (count == 2) {
+					BuyMessage.setText(name + "의 통행료 " + price * 1.5 + "원을 지불을 하였습니다.");
+					money[curturn] -= price;
+					MyMoney.setText("보유금액 : " + money[curturn] + "원");
+					if (curturn == 0) {
+						money[1] += price * 1.5;
+						Money1.setText("보유금액 : " + money[0] + "원");
+						Money2.setText("보유금액 : " + money[1] + "원");
+					} else {
+						money[0] += price * 1.5;
+						Money1.setText("보유금액 : " + money[0] + "원");
+						Money2.setText("보유금액 : " + money[1] + "원");
+					}
+				} else if (count == 3) {
+					BuyMessage.setText(name + "의 통행료 " + price * 2 + "원을 지불을 하였습니다.");
+					money[curturn] -= price + price;
+					MyMoney.setText("보유금액 : " + money[curturn] + "원");
+					if (curturn == 0) {
+						money[1] += price * 2;
+						Money1.setText("보유금액 : " + money[0] + "원");
+						Money2.setText("보유금액 : " + money[1] + "원");
+					} else {
+						money[0] += price * 2;
+						Money1.setText("보유금액 : " + money[0] + "원");
+						Money2.setText("보유금액 : " + money[1] + "원");
+					}
+				} else if (count == 4) {
+					BuyMessage.setText(name + "의 통행료 " + price * 2.5 + "원을 지불을 하였습니다.");
+					money[curturn] -= price * 2.5;
+					MyMoney.setText("보유금액 : " + money[curturn] + "원");
+					if (curturn == 0) {
+						money[1] += price * 2.5;
+						Money1.setText("보유금액 : " + money[0] + "원");
+						Money2.setText("보유금액 : " + money[1] + "원");
+					} else {
+						money[0] += price * 2.5;
+						Money1.setText("보유금액 : " + money[0] + "원");
+						Money2.setText("보유금액 : " + money[1] + "원");
+					}
+				}
+
 			}
 
 			Button Complete = (Button) anchorPane.lookup("#Complete");
@@ -244,62 +310,87 @@ public class AppController implements Initializable {
 
 			Scene scene = new Scene(anchorPane);
 			dialog.setScene(scene);
+			dialog.setAlwaysOnTop(true);
 			dialog.show();
 
-		} else {
-			try {
-				if(name.equals("비밀카드")) {
-					anchorPane = (AnchorPane) FXMLLoader.load(getClass().getResource("secretCard.fxml"));
-					ImageView secretCard = (ImageView) anchorPane.lookup("#secretCard");
-					int cardNum;
-					if(randQueue.poll() == null) {	// 모든 비밀카드가 오픈되고 나면 비밀카드 다시 채워줌
-						setSecretCard();
-						cardNum = randQueue.poll();
-					}else {
-						cardNum = randQueue.poll();
-					}
-					String imgName = cardNum +".png";
-					Image img = new Image("file:../../resources/images/secretCard/" + imgName);
-					secretCard.setImage(img);
-					Button Complete = (Button) anchorPane.lookup("#Complete");
-					Complete.setOnAction(event -> dialog.close());
-					actionSecretCard(cardNum);
-				}else {
-					anchorPane = (AnchorPane) FXMLLoader.load(getClass().getResource("dialogtest.fxml"));
-					BuyPlanet = (Button) anchorPane.lookup("#BuyPlanet");
-					BuyPlanet.setVisible(true);
-					Label PlanetName = (Label) anchorPane.lookup("#PlanetName");
-					Label PlanetOwner = (Label) anchorPane.lookup("#PlanetOwner");
-					Label PlanetData = (Label) anchorPane.lookup("#PlanetData");
-					PlanetName.setText(name);
-					PlanetOwner.setText(owner);
-					PlanetData.setText(data);
-					if (!owner.equals("X") || price == 0) {
-						BuyPlanet.setVisible(false);
-					}
-					
-					BuyPlanet.setOnAction(event -> BuyLand(name, owner, data, price, building,tmp));
-					Button Complete = (Button) anchorPane.lookup("#Complete");
-					Complete.setOnAction(event -> dialog.close());
-				}
-			} catch (IOException e2) {
-				e2.printStackTrace();
-			}
-
-
-
-			Scene scene = new Scene(anchorPane);
-			dialog.setScene(scene);
-			dialog.show();
 		}
 
+		try {
+			if (name.equals("비밀카드")) {
+				anchorPane = (AnchorPane) FXMLLoader.load(getClass().getResource("secretCard.fxml"));
+				ImageView secretCard = (ImageView) anchorPane.lookup("#secretCard");
+				int cardNum;
+				if (randQueue.poll() == null) { // 모든 비밀카드가 오픈되고 나면 비밀카드 다시 채워줌
+					setSecretCard();
+					cardNum = randQueue.poll();
+				} else {
+					cardNum = randQueue.poll();
+				}
+				String imgName = cardNum + ".png";
+				Image img = new Image("file:../../resources/images/secretCard/" + imgName);
+				secretCard.setImage(img);
+				Button Complete = (Button) anchorPane.lookup("#Complete");
+				Complete.setOnAction(event -> dialog2.close());
+				actionSecretCard(cardNum, curturn);
+			} else {
+				anchorPane = (AnchorPane) FXMLLoader.load(getClass().getResource("dialogtest.fxml"));
+				BuyPlanet = (Button) anchorPane.lookup("#BuyPlanet");
+				BuyPlanet.setVisible(true);
+				CostPlanet = (Button) anchorPane.lookup("#CostPlanet");
+				CostPlanet.setVisible(true);
+				Label PlanetName = (Label) anchorPane.lookup("#PlanetName");
+				PlanetOwner = (Label) anchorPane.lookup("#PlanetOwner");
+				Label PlanetData = (Label) anchorPane.lookup("#PlanetData");
+				PlanetName.setText(name);
+				PlanetOwner.setText(owner);
+				PlanetData.setText(data);
+				int tp = 0;
+				if (owner.equals(user[curturn])) {
+					if (count == 0) {
+						tp = price;
+						CostPlanet.setText("구입 금액 : " + tp);
+					} else {
+						tp = (price / 2);
+						CostPlanet.setText("구입 금액 : " + tp);
+					}
+
+				} else {
+					if (count == 0) {
+						tp = price;
+						CostPlanet.setText("구입 금액 : " + tp);
+					} else {
+						tp = price + (price / 2) * (count - 1);
+						CostPlanet.setText("구입 금액 : " + tp);
+					}
+				}
+
+				if (price == 0 || (position[curturn]) == 0 || (count == 4 && owner.equals(user[turn]))) {
+					BuyPlanet.setVisible(false);
+					CostPlanet.setVisible(false);
+				}
+
+				BuyPlanet.setOnAction(event -> {
+					BuyLand(name, owner, data, price, curturn);
+				});
+
+				Button Complete = (Button) anchorPane.lookup("#Complete");
+				Complete.setOnAction(event -> dialog2.close());
+			}
+		} catch (IOException e2) {
+			e2.printStackTrace();
+		}
+
+		Scene scene = new Scene(anchorPane);
+		dialog2.setScene(scene);
+		dialog2.show();
+
 	}
-	
+
 	public void takeLand() {
 		Stage dialog = new Stage(StageStyle.UTILITY);
 		dialog.initModality(Modality.WINDOW_MODAL);
 		dialog.initOwner(primaryStage);
-		dialog.setTitle("상대땅 가져오기");		
+		dialog.setTitle("상대땅 가져오기");
 		AnchorPane anchorPane = null;
 
 		try {
@@ -309,13 +400,19 @@ public class AppController implements Initializable {
 		}
 	}
 
-	public void BuyLand(String name, String owner, String data, int price, int building, int turn) {
+	public void BuyLand(String name, String owner, String data, int price, int turn) {
 		Stage dialog = new Stage(StageStyle.UTILITY);
 		dialog.initModality(Modality.WINDOW_MODAL);
 		dialog.initOwner(primaryStage);
 		dialog.setTitle("구매 확인");
 		AnchorPane anchorPane = null;
-
+		int tp = 0;
+		int cost = 0;
+		if (planetData.get(position[turn]).count == 0) {
+			tp = price;
+		} else {
+			tp = price + (price / 2) * (planetData.get(position[turn]).count);
+		}
 		try {
 			anchorPane = (AnchorPane) FXMLLoader.load(getClass().getResource("dialog2.fxml"));
 		} catch (IOException e2) {
@@ -328,53 +425,129 @@ public class AppController implements Initializable {
 		Button Complete = (Button) anchorPane.lookup("#Complete");
 
 		Complete.setOnAction(event -> dialog.close());
-		Rectangle rec[]=new Rectangle[2];
-		rec[0]=new Rectangle(pieceXY.get(position[turn]-1).pieceX+10, pieceXY.get(position[turn]-1).pieceY,40,40);
-		rec[0].setFill(Color.DODGERBLUE);
-		rec[1]=new Rectangle(pieceXY.get(position[turn]-1).pieceX+10, pieceXY.get(position[turn]-1).pieceY,40,40);
-		rec[1].setFill(Color.RED);
-		ImageView flag= new ImageView();
+		Rectangle rec[] = new Rectangle[2];
 
-		if (money < price) {
+		ImageView flag = new ImageView();
+		// planetData.get(position[turn]).count=1;
+		if (money[turn] < tp) {
 			BuyMessage.setText("보유금액이 부족합니다.");
-			MyMoney.setText("보유금액 : " + money + "원");
+			MyMoney.setText("보유금액 : " + money[turn] + "원");
 		} else {
-			if(planetData.get(position[turn]).owner.equals("X"))
-			{
-				planetData.get(position[turn]).owner=user[turn];
+			if (planetData.get(position[turn]).owner.equals("X")) {
+				planetData.get(position[turn]).owner = user[turn];
+				PlanetOwner.setText(user[turn]);
 			}
-			if(!planetData.get(position[turn]).owner.equals(user[turn])) {
-				planetData.get(position[turn]).count=0;	
+			if (!planetData.get(position[turn]).owner.equals(user[turn])) {
+
+				for (int i = 0; i < planetData.get(position[turn]).building.size(); i++) {
+					root.getChildren().remove(planetData.get(position[turn]).building.get(i));
+				}
+				planetData.get(position[turn]).building.clear();
+				cost = (price / 2) * (planetData.get(position[turn]).count);
+				planetData.get(position[turn]).count = 0;
 			}
-			if(planetData.get(position[turn]).count==0) {
-				Image im = new Image("file:../../resources/images/flag"+(turn+1)+".PNG");
-				flag.setLayoutX(pieceXY.get(position[turn]-1).pieceX);
-				flag.setLayoutY(pieceXY.get(position[turn]-1).pieceY);
+			if (planetData.get(position[turn]).count == 0) {
+				Image im = new Image("file:../../resources/images/flag" + (turn + 1) + ".PNG");
+				flag.setLayoutX(pieceXY.get(position[turn] - 1).pieceX);
+				flag.setLayoutY(pieceXY.get(position[turn] - 1).pieceY);
 				flag.setFitHeight(30);
 				flag.setFitWidth(20);
 				flag.setImage(im);
-				while(root.getChildren().size()!=6) {
-					root.getChildren().remove(root.getChildren().size()-1);
-				}
-				root.getChildren().add(flag);				
+//            System.out.println(root.getChildren().size());            
+				root.getChildren().add(flag);
 				planetData.get(position[turn]).count++;
-				planetData.get(position[turn]).owner=user[turn];
+				planetData.get(position[turn]).owner = user[turn];
+				planetData.get(position[turn]).building.add(flag);
 				BuyMessage.setText("구매 완료하였습니다.");
-				money -= price;
-				MyMoney.setText("보유금액 : " + money + "원");
-				Money1.setText("보유금액 : " + money + "원");
-			}
-			else if(planetData.get(position[turn]).count==1) {				
+				if (owner.equals("X")) {
+					money[turn] -= price;
+					MyMoney.setText("보유금액 : " + money[turn] + "원");
+					if (turn == 0) {
+						Money1.setText("보유금액 : " + money[turn] + "원");
+					} else {
+						Money2.setText("보유금액 : " + money[turn] + "원");
+					}
+				} else {
+					MyMoney.setText("보유금액 : " + money[turn] + "원");
+					if (turn == 0) {
+						money[0] -= cost;
+						money[1] += cost;
+						MyMoney.setText("보유금액 : " + money[0] + "원");
+						Money1.setText("보유금액 : " + money[0] + "원");
+						Money2.setText("보유금액 : " + money[1] + "원");
+					} else {
+						money[0] += cost;
+						money[1] -= cost;
+						MyMoney.setText("보유금액 : " + money[1] + "원");
+						Money1.setText("보유금액 : " + money[0] + "원");
+						Money2.setText("보유금액 : " + money[1] + "원");
+					}
+				}
+
+				System.out.println(planetData.get(position[turn]).count);
+			} else if (planetData.get(position[turn]).count == 1) {
+				rec[0] = new Rectangle(pieceXY.get(position[turn] - 1).pieceX - 33,
+						pieceXY.get(position[turn] - 1).pieceY - 30, 20, 20);
+				rec[0].setFill(Color.DODGERBLUE);
+				rec[1] = new Rectangle(pieceXY.get(position[turn] - 1).pieceX - 33,
+						pieceXY.get(position[turn] - 1).pieceY - 30, 20, 20);
+				rec[1].setFill(Color.RED);
 				root.getChildren().add(rec[turn]);
 				planetData.get(position[turn]).count++;
 
-				planetData.get(position[turn]).owner=user[turn];
+				planetData.get(position[turn]).owner = user[turn];
+				planetData.get(position[turn]).building.add(rec[turn]);
 				BuyMessage.setText("구매 완료하였습니다.");
-				money -= price;
-				MyMoney.setText("보유금액 : " + money + "원");
-				Money1.setText("보유금액 : " + money + "원");
+				money[turn] -= price / 2;
+				MyMoney.setText("보유금액 : " + money[turn] + "원");
+				if (turn == 0) {
+					Money1.setText("보유금액 : " + money[turn] + "원");
+				} else {
+					Money2.setText("보유금액 : " + money[turn] + "원");
+				}
+			} else if (planetData.get(position[turn]).count == 2) {
+				rec[0] = new Rectangle(pieceXY.get(position[turn] - 1).pieceX - 10,
+						pieceXY.get(position[turn] - 1).pieceY - 30, 20, 20);
+				rec[0].setFill(Color.DODGERBLUE);
+				rec[1] = new Rectangle(pieceXY.get(position[turn] - 1).pieceX - 10,
+						pieceXY.get(position[turn] - 1).pieceY - 30, 20, 20);
+				rec[1].setFill(Color.RED);
+				root.getChildren().add(rec[turn]);
+				planetData.get(position[turn]).count++;
+
+				planetData.get(position[turn]).owner = user[turn];
+				planetData.get(position[turn]).building.add(rec[turn]);
+				BuyMessage.setText("구매 완료하였습니다.");
+				money[turn] -= price / 2;
+				MyMoney.setText("보유금액 : " + money[turn] + "원");
+				if (turn == 0) {
+					Money1.setText("보유금액 : " + money[turn] + "원");
+				} else {
+					Money2.setText("보유금액 : " + money[turn] + "원");
+				}
+			} else if (planetData.get(position[turn]).count == 3) {
+				rec[0] = new Rectangle(pieceXY.get(position[turn] - 1).pieceX + 13,
+						pieceXY.get(position[turn] - 1).pieceY - 30, 20, 20);
+				rec[0].setFill(Color.DODGERBLUE);
+				rec[1] = new Rectangle(pieceXY.get(position[turn] - 1).pieceX + 13,
+						pieceXY.get(position[turn] - 1).pieceY - 30, 20, 20);
+				rec[1].setFill(Color.RED);
+				root.getChildren().add(rec[turn]);
+				planetData.get(position[turn]).count++;
+
+				planetData.get(position[turn]).owner = user[turn];
+				planetData.get(position[turn]).building.add(rec[turn]);
+				BuyMessage.setText("구매 완료하였습니다.");
+				money[turn] -= price / 2;
+				MyMoney.setText("보유금액 : " + money[turn] + "원");
+				if (turn == 0) {
+					Money1.setText("보유금액 : " + money[turn] + "원");
+				} else {
+					Money2.setText("보유금액 : " + money[turn] + "원");
+				}
 			}
 		}
+		CostPlanet.setVisible(false);
 		BuyPlanet.setVisible(false);
 		Scene scene = new Scene(anchorPane);
 		dialog.setScene(scene);
@@ -418,14 +591,19 @@ public class AppController implements Initializable {
 		position[turn]++;
 		if (position[turn] == pieceXY.size()) {
 			position[turn] = 0;
-			money += 200000;
-			Money1.setText("보유금액:" + money + "원");
+			money[turn] += 200000;
+			if (turn == 0) {
+				Money1.setText("보유금액:" + money[turn] + "원");
+			} else {
+				Money2.setText("보유금액:" + money[turn] + "원");
+			}
+
 		}
 	}
-	
+
 	public void setRoot(AnchorPane root) {
-    	this.root = root;
-    }
+		this.root = root;
+	}
 
 	public void setPrimaryStage(Stage primaryStage) {
 		this.primaryStage = primaryStage;
@@ -462,34 +640,34 @@ public class AppController implements Initializable {
 		pieceXY.add(new PieceXY(822, 425));
 		pieceXY.add(new PieceXY(822, 505));
 
-		planetData.add(new PlanetData("지구", "X", "수고비 20만원", 200000, 0, 0));
-		planetData.add(new PlanetData("비밀카드", "X", "X", 0, 0, 0));
-		planetData.add(new PlanetData("화성", "X", "20만원", 200000, 0, 0));
-		planetData.add(new PlanetData("목성", "X", "15만원", 150000, 0, 0));
-		planetData.add(new PlanetData("비밀카드", "X", "X", 0, 0, 0));
-		planetData.add(new PlanetData("토성", "X", "8만원", 80000, 0, 0));
-		planetData.add(new PlanetData("천왕성", "X", "13만원", 130000, 0, 0));
-		planetData.add(new PlanetData("해왕성", "X", "25만원", 250000, 0, 0));
-		planetData.add(new PlanetData("물병자리", "X", "12만원", 120000, 0, 0));
-		planetData.add(new PlanetData("워프", "X", "이동", 0, 0, 0));
-		planetData.add(new PlanetData("명왕성", "X", "40만원", 400000, 0, 0));
-		planetData.add(new PlanetData("비밀카드", "X", "X", 0, 0, 0));
-		planetData.add(new PlanetData("안드로메다", "X", "45만원", 450000, 0, 0));
-		planetData.add(new PlanetData("북극성", "X", "44만원", 440000, 0, 0));
-		planetData.add(new PlanetData("블랙홀", "X", "2턴 멈춤", 0, 0, 0));
-		planetData.add(new PlanetData("비밀카드", "X", "X", 0, 0, 0));
-		planetData.add(new PlanetData("달", "X", "100만원", 1000000, 0, 0));
-		planetData.add(new PlanetData("비밀카드", "X", "X", 0, 0, 0));
-		planetData.add(new PlanetData("태양", "X", "120만원", 1200000, 0, 0));
-		planetData.add(new PlanetData("시리우스", "X", "90만원", 900000, 0, 0));
-		planetData.add(new PlanetData("프로키온", "X", "95만원", 950000, 0, 0));
-		planetData.add(new PlanetData("비밀카드", "X", "X", 0, 0, 0));
-		planetData.add(new PlanetData("베크록스", "X", "80만원", 800000, 0, 0));
-		planetData.add(new PlanetData("조난기지", "X", "1턴멈춤 기부 50만원", 500000, 0, 0));
-		planetData.add(new PlanetData("아크록스", "X", "65만원", 650000, 0, 0));
-		planetData.add(new PlanetData("비밀카드", "X", "X", 0, 0, 0));
-		planetData.add(new PlanetData("수성", "X", "55만원", 550000, 0, 0));
-		planetData.add(new PlanetData("금성", "X", "60만원", 600000, 0, 0));
+		planetData.add(new PlanetData("지구", "X", "수고비 20만원", 200000, 0));
+		planetData.add(new PlanetData("비밀카드", "X", "X", 0, 0));
+		planetData.add(new PlanetData("화성", "X", "20만원", 200000, 0));
+		planetData.add(new PlanetData("목성", "X", "15만원", 150000, 0));
+		planetData.add(new PlanetData("비밀카드", "X", "X", 0, 0));
+		planetData.add(new PlanetData("토성", "X", "8만원", 80000, 0));
+		planetData.add(new PlanetData("천왕성", "X", "13만원", 130000, 0));
+		planetData.add(new PlanetData("해왕성", "X", "25만원", 250000, 0));
+		planetData.add(new PlanetData("물병자리", "X", "12만원", 120000, 0));
+		planetData.add(new PlanetData("워프", "X", "이동", 0, 0));
+		planetData.add(new PlanetData("명왕성", "X", "40만원", 400000, 0));
+		planetData.add(new PlanetData("비밀카드", "X", "X", 0, 0));
+		planetData.add(new PlanetData("안드로메다", "X", "45만원", 450000, 0));
+		planetData.add(new PlanetData("북극성", "X", "44만원", 440000, 0));
+		planetData.add(new PlanetData("블랙홀", "X", "2턴 멈춤", 0, 0));
+		planetData.add(new PlanetData("비밀카드", "X", "X", 0, 0));
+		planetData.add(new PlanetData("달", "X", "100만원", 1000000, 0));
+		planetData.add(new PlanetData("비밀카드", "X", "X", 0, 0));
+		planetData.add(new PlanetData("태양", "X", "120만원", 1200000, 0));
+		planetData.add(new PlanetData("시리우스", "X", "90만원", 900000, 0));
+		planetData.add(new PlanetData("프로키온", "X", "95만원", 950000, 0));
+		planetData.add(new PlanetData("비밀카드", "X", "X", 0, 0));
+		planetData.add(new PlanetData("베크록스", "X", "80만원", 800000, 0));
+		planetData.add(new PlanetData("조난기지", "X", "1턴멈춤 기부 50만원", 500000, 0));
+		planetData.add(new PlanetData("아크록스", "X", "65만원", 650000, 0));
+		planetData.add(new PlanetData("비밀카드", "X", "X", 0, 0));
+		planetData.add(new PlanetData("수성", "X", "55만원", 550000, 0));
+		planetData.add(new PlanetData("금성", "X", "60만원", 600000, 0));
 
 	}
 

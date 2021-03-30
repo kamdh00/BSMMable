@@ -21,7 +21,8 @@
             <Image url="@../../resources/images/dice1.PNG" />
          </image>
       </ImageView>      
-      <TextField fx:id="Money1" />
+      <TextField fx:id="Money1" layoutY="585.0" />
       <Circle fx:id="C2" fill="#ff1f1f" layoutX="819.0" layoutY="522.0" radius="17.0" stroke="BLACK" strokeType="INSIDE" />
+      <TextField fx:id="Money2" />
    </children>
 </AnchorPane>

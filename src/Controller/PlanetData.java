@@ -1,18 +1,20 @@
 package Controller;
 
+import java.util.ArrayList;
+
 public class PlanetData {
 	String name;
 	String owner;
 	String data;
 	int price;
-	int building;
+	ArrayList<Object> building;
 	int count;
-	public PlanetData(String name, String owner, String data, int price, int building, int count) {
+	public PlanetData(String name, String owner, String data, int price, int count) {
+		building = new ArrayList<Object>();
 		this.name = name;
 		this.owner = owner;
 		this.data = data;
-		this.price = price;
-		this.building = building;
+		this.price = price;		
 		this.count = count;
 	}
 	public String getName() {
@@ -39,11 +41,6 @@ public class PlanetData {
 	public void setPrice(int price) {
 		this.price = price;
 	}
-	public int getBuilding() {
-		return building;
-	}
-	public void setBuilding(int building) {
-		this.building = building;
-	}	
+	
 	
 }
