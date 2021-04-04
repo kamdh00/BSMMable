@@ -12,6 +12,7 @@ import java.util.concurrent.TimeUnit;
 import javafx.animation.PathTransition;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -66,6 +67,7 @@ public class AppController implements Initializable {
 
 //	int cardNum = 22; // test용
 	int Cardposi = 0; // 카드로 나온 포지션.
+	int bre = 0;
 
 	int cntX[] = { 0, 0 };
 	int cntY[] = { 0, 0 };
@@ -140,15 +142,28 @@ public class AppController implements Initializable {
 				}
 
 				Platform.runLater(() -> {
+					System.out.println("bre:" + bre);
 					btn1.setDisable(false);
 					showDialog();
-					if (d1 != d2) {
+					if (d1 != d2 && bre == 0) {
 						if (curturn == 0) {
 							turn = 1;
 						} else {
 							turn = 0;
 						}
-					} else {
+					} else if (bre == 1 || bre == 3) {
+						System.out.println("bre:" + bre);
+						if (curturn == 0) {
+							turn = 1;
+						} else {
+							turn = 0;
+						}
+						bre++;
+					} else if (bre == 2) {
+						bre = 0;
+					} else if (bre == 4) {
+						bre = 2;
+					} else if (d1 == d2) {
 						doublePopup.show(primaryStage, 880, 720);
 					}
 				});
@@ -190,16 +205,16 @@ public class AppController implements Initializable {
 	public void actionSecretCard(int num, int turn) {
 		switch (num) {
 		case 0: // 소유한 본인땅의 모든 건물 삭제
-	         for (int i = 0; i < planetData.size(); i++) {
-	            if (user[turn].equals(planetData.get(i).owner)) {
-	               for (int j = 0; j < planetData.get(i).building.size(); j++) {
-	                  root.getChildren().remove(planetData.get(i).building.get(j));
-	               }
-	               planetData.get(i).owner="X";
-	               planetData.get(i).count=0;
-	            }
-	         }
-	         break;
+			for (int i = 0; i < planetData.size(); i++) {
+				if (user[turn].equals(planetData.get(i).owner)) {
+					for (int j = 0; j < planetData.get(i).building.size(); j++) {
+						root.getChildren().remove(planetData.get(i).building.get(j));
+					}
+					planetData.get(i).owner = "X";
+					planetData.get(i).count = 0;
+				}
+			}
+			break;
 		case 1: // 후원금 30만원 받음
 			money[turn] += 300000;
 			if (turn == 0) {
@@ -236,6 +251,7 @@ public class AppController implements Initializable {
 			Cardposi = 1;
 			int posi2 = position[turn];
 			setPosition2(posi2);
+			break;
 
 		case 6:
 			money[turn] -= 300000;
@@ -272,8 +288,10 @@ public class AppController implements Initializable {
 			break;
 		case 11:
 			// 가장 비싼 땅을 반액에 팔음. 선물이 지어진 경우 반액에 처분.
+			break;
 		case 12:
 			// 모든 땅 반납
+			break;
 		case 13:
 			money[turn] = money[turn] - (money[turn] / 2);
 			if (turn == 0) {
@@ -295,8 +313,9 @@ public class AppController implements Initializable {
 				Money2.setText("보유금액 : " + money[turn] + "원");
 			}
 			break;
-		case 15:
-			// 한턴 쉽니다.
+		case 15: // 한턴 쉽니다.
+			bre = 1;
+			break;
 		case 16:
 			// 지구로 돌아갑니다. 수고비를 받습니다.
 			Cardposi = 3;
@@ -334,6 +353,7 @@ public class AppController implements Initializable {
 			takeLand(2);
 			break;
 		case 20: // 건물 두개 지을 땅 선택 (자신의 땅이여야함. 땅이 없을시 무효.)
+			break;
 
 		case 21:
 			money[turn] += 100000;
@@ -357,8 +377,19 @@ public class AppController implements Initializable {
 			break;
 		// 서버 소켓..
 		case 23: // 통행료 없이 땅 지나가기
+			break;
 
 		case 24: // 10만원 내고 비밀 카드 한 장 더 뽑기
+			money[turn] -= 100000;
+			if (turn == 0) {
+				Money1.setText("보유금액 : " + money[turn] + "원");
+			} else {
+				Money2.setText("보유금액 : " + money[turn] + "원");
+			}
+			Platform.runLater(() -> {
+				oneMore();
+			});
+			break;
 
 		case 25: // 상대편 금액 +30만원 로직 추가해야함. socket으로 +30만원 전송
 			money[turn] += 200000;
@@ -374,7 +405,8 @@ public class AppController implements Initializable {
 			break;
 
 		case 26: // 주사위 한번 더
-
+			bre = 2;
+			break;
 		case 27:
 			money[turn] += 200000;
 			if (turn == 0) {
@@ -567,6 +599,10 @@ public class AppController implements Initializable {
 				if (name.equals("워프")) {
 					setWarp(anchorPane, dialog2);
 					Complete.setVisible(false);
+				} else if (name.equals("조난기지")) {
+					bre = 1;
+				} else if (name.equals("블랙홀")) {
+					bre = 3;
 				} else {
 					Complete.setVisible(true);
 				}
@@ -579,6 +615,45 @@ public class AppController implements Initializable {
 		Scene scene = new Scene(anchorPane);
 		dialog2.setScene(scene);
 		dialog2.show();
+
+	}
+
+	public void oneMore() {
+		AnchorPane anchorPane = null;
+
+		Stage dialog3 = new Stage(StageStyle.UTILITY);
+		dialog3.initModality(Modality.WINDOW_MODAL);
+		dialog3.initOwner(primaryStage);
+		dialog3.setTitle("알림");
+
+		try {
+			anchorPane = (AnchorPane) FXMLLoader.load(getClass().getResource("dialog3.fxml"));
+
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		Label secretCard1 = (Label) anchorPane.lookup("#secretCard1");
+		Label secretCard2 = (Label) anchorPane.lookup("#secretCard2");
+		Button Yes = (Button) anchorPane.lookup("#Yes");
+		;
+		Button No = (Button) anchorPane.lookup("#No");
+		;
+
+		Yes.setOnAction((EventHandler<ActionEvent>) new EventHandler<ActionEvent>() {
+			@Override
+			public void handle(ActionEvent e) {
+				Platform.runLater(() -> {
+					showDialog();
+					dialog3.close();
+				});
+			}
+		});
+		No.setOnAction(event -> dialog3.close());
+
+		Scene scene = new Scene(anchorPane);
+		dialog3.setScene(scene);
+		dialog3.show();
 
 	}
 
@@ -740,38 +815,38 @@ public class AppController implements Initializable {
 		dialog.setScene(scene);
 		dialog.show();
 	}
-	
-	// 비밀카드로 땅 교환시 동작 함수
-	   private void changeLand(ChoiceBox<String> choiceYourBox, ChoiceBox<String> choiceMyBox) {
-	      String[] name = { choiceYourBox.getValue(), choiceMyBox.getValue() };
-	      int nextTurn = (curturn + 1) % 2;
-	      System.out.println(curturn + "," + nextTurn + ":" + name[0] + "," + name[1]);
-	      
-	      for (int i = 0; i < planetData.size(); i++) {
-	         if (planetData.get(i).name.equals(name[0])) { // 선택한 상대 땅일때 동작
-	            // 플래그 변경
-	            System.out.println("상대땅 변경" + curturn);
-	            ChangeLandFlag(i, curturn); // 땅 가져올때 플래그들 변경 함수
-	            // 소유자 변경
-	            if (curturn == 0) {
-	               planetData.get(i).owner = user[0];
-	            } else {
-	               planetData.get(i).owner = user[1];
-	            }
-	         } else if (planetData.get(i).name.equals(name[1])) { // 선택한 내땅
-	            System.out.println("내땅 변경" + nextTurn);
-	            ChangeLandFlag(i, nextTurn); // 땅 가져올대 플래그들 변경 함수
-	            // 소유자 변경
-	            if (nextTurn == 0) {
-	               planetData.get(i).owner = user[0];
-	            } else {
-	               planetData.get(i).owner = user[1];
-	            }
-	         }
-	      }
 
-	      choiceLand.setVisible(false);
-	   }
+// 비밀카드로 땅 교환시 동작 함수
+	private void changeLand(ChoiceBox<String> choiceYourBox, ChoiceBox<String> choiceMyBox) {
+		String[] name = { choiceYourBox.getValue(), choiceMyBox.getValue() };
+		int nextTurn = (curturn + 1) % 2;
+		System.out.println(curturn + "," + nextTurn + ":" + name[0] + "," + name[1]);
+
+		for (int i = 0; i < planetData.size(); i++) {
+			if (planetData.get(i).name.equals(name[0])) { // 선택한 상대 땅일때 동작
+				// 플래그 변경
+				System.out.println("상대땅 변경" + curturn);
+				ChangeLandFlag(i, curturn); // 땅 가져올때 플래그들 변경 함수
+				// 소유자 변경
+				if (curturn == 0) {
+					planetData.get(i).owner = user[0];
+				} else {
+					planetData.get(i).owner = user[1];
+				}
+			} else if (planetData.get(i).name.equals(name[1])) { // 선택한 내땅
+				System.out.println("내땅 변경" + nextTurn);
+				ChangeLandFlag(i, nextTurn); // 땅 가져올대 플래그들 변경 함수
+				// 소유자 변경
+				if (nextTurn == 0) {
+					planetData.get(i).owner = user[0];
+				} else {
+					planetData.get(i).owner = user[1];
+				}
+			}
+		}
+
+		choiceLand.setVisible(false);
+	}
 
 	// 상대땅 가져올때 설치되어 있는 플래그들 변경 함수
 	public void ChangeLandFlag(int landPosition, int userNum) {
@@ -822,7 +897,7 @@ public class AppController implements Initializable {
 				if (!planetData.get(i).owner.equals("X")) { // 상대땅 가져오기 일때만 기존 플레그 제거
 					ChangeLandFlag(i, curturn); // 땅 가져올대 플래그들 변경 함수
 				} else {
-					setFlag(i,curturn); // 플래그 설치 함수
+					setFlag(i, curturn); // 플래그 설치 함수
 					planetData.get(i).count++;
 				}
 				// 소유자 변경
@@ -858,7 +933,7 @@ public class AppController implements Initializable {
 		int cost = 0;
 		cost = price + (price / 2) * (planetData.get(position[turn]).count - 1);
 		AnchorPane anchorPane = null;
-		int nextTurn = (turn+1)%2;
+		int nextTurn = (turn + 1) % 2;
 
 		try {
 			anchorPane = (AnchorPane) FXMLLoader.load(getClass().getResource("dialog2.fxml"));
@@ -981,7 +1056,7 @@ public class AppController implements Initializable {
 		Scene scene = new Scene(anchorPane);
 		dialog.setScene(scene);
 		dialog.show();
-		
+
 		ChangeLandFlag(1, 0);
 		ChangeLandFlag(2, 1);
 	}
@@ -1032,10 +1107,10 @@ public class AppController implements Initializable {
 	// 비밀 카드 상황에 따른 이동 메서드.
 	public void setPosition2(int move) {
 		if (Cardposi == 1) { // 5번째 카드, 조난 기지로.
-			if (move < 23) {
+			if (move <= 23) {
 				move = 23 - move;
 			} else {
-				move = 26;
+				move = 51 - move;
 			}
 		} else if (Cardposi == 2) {// 7번째 카드 블랙홀로
 			if (move < 14) {
@@ -1052,7 +1127,7 @@ public class AppController implements Initializable {
 				move = 37 - move;
 			}
 		} else if (Cardposi == 5) {
-			if (move < 23) {
+			if (move <= 23) {
 				move = 23 - move;
 			} else {
 				move = 26;
