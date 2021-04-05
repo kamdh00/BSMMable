@@ -45,19 +45,17 @@ public class LoginController implements Initializable {
 	@FXML
 	private Button btnSignin;
 
-	/// --
 	Connection con = null;
 	PreparedStatement psmt = null;
 	ResultSet rs = null;
 	
-	private Stage primaryStage;
-
 	@FXML
 	public void handleButtonAction(MouseEvent event) {
 
 		if (event.getSource() == btnSignin) {
+			String id = logIn();
 			// login here
-			if (logIn().equals("Success")) {
+			if (!id.equals("Error")) {
 				try {
                     Node node = (Node) event.getSource();
                     Stage stage = (Stage) node.getScene().getWindow();
@@ -68,6 +66,7 @@ public class LoginController implements Initializable {
               	  	AppController controller = loader.getController();
               	  	controller.setPrimaryStage(stage);
               	  	controller.setRoot(root);
+              	  	controller.setUser(id);
               	  	Scene scene = new Scene(root);
               	  	stage.setTitle("BlueMarble");
               	  	stage.setScene(scene);
@@ -107,7 +106,7 @@ public class LoginController implements Initializable {
 			status = "Error";
 		} else {
 			// query
-			String sql = "SELECT * FROM MEMBER Where id = '" + id + "' and pwd = '" + pwd + "'";
+			String sql = "SELECT id FROM MEMBER Where id = '" + id + "' and pwd = '" + pwd + "'";
 			try {
 				psmt = con.prepareStatement(sql);
 				rs = psmt.executeQuery();
@@ -115,6 +114,7 @@ public class LoginController implements Initializable {
 					setLblError(Color.TOMATO, "Enter Correct ID/Password");
 					status = "Error";
 				} else {
+					status = rs.getString(1);
 					setLblError(Color.GREEN, "Login Successful..Redirecting..");
 				}
 			} catch (SQLException ex) {

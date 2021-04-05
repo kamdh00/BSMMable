@@ -7,7 +7,6 @@ import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Random;
 import java.util.ResourceBundle;
-import java.util.concurrent.TimeUnit;
 
 import javafx.animation.PathTransition;
 import javafx.application.Platform;
@@ -33,8 +32,6 @@ import javafx.scene.shape.MoveTo;
 import javafx.scene.shape.Path;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.VLineTo;
-import javafx.scene.text.Font;
-import javafx.scene.text.FontWeight;
 import javafx.stage.Modality;
 import javafx.stage.Popup;
 import javafx.stage.Stage;
@@ -53,6 +50,8 @@ public class AppController implements Initializable {
 	ImageView DiceImg1, DiceImg2;
 	@FXML
 	TextField Money1, Money2;
+	@FXML
+	Label myName, yourName;
 	Label PlanetOwner;
 	private static int TOP = 0;
 	private static int LEFT = 1;
@@ -67,7 +66,7 @@ public class AppController implements Initializable {
 
 //	int cardNum = 22; // test용
 	int Cardposi = 0; // 카드로 나온 포지션.
-	int bre = 0;
+	int bre[] = { 0, 0 };
 
 	int cntX[] = { 0, 0 };
 	int cntY[] = { 0, 0 };
@@ -97,6 +96,11 @@ public class AppController implements Initializable {
 		Money2.setText("보유금액 : " + money[1] + "원");
 		Money2.setEditable(false);
 		btn1.setOnAction((event) -> rollTheDice(event));
+	}
+	
+	public void setUser(String id) {
+		this.user[0] = id;
+		myName.setText(id+" 님");
 	}
 
 	public void rollTheDice(ActionEvent e) {
@@ -145,26 +149,26 @@ public class AppController implements Initializable {
 					System.out.println("bre:" + bre);
 					btn1.setDisable(false);
 					showDialog();
-					if (d1 != d2 && bre == 0) {
+					if (d1 != d2 && bre[curturn] == 0) {
 						if (curturn == 0) {
 							turn = 1;
 						} else {
 							turn = 0;
 						}
-					} else if (bre == 1 || bre == 3) {
-						System.out.println("bre:" + bre);
-						if (curturn == 0) {
-							turn = 1;
-						} else {
-							turn = 0;
-						}
-						bre++;
-					} else if (bre == 2) {
-						bre = 0;
-					} else if (bre == 4) {
-						bre = 2;
+					} else if (bre[curturn] == 1) {
+						bre[curturn] = 0;
+
+					} else if (bre[curturn] == 2) {
+						bre[curturn] = 1;
+
 					} else if (d1 == d2) {
-						doublePopup.show(primaryStage, 880, 720);
+						if (bre[(curturn + 1) % 2] != 0) {
+							turn = (curturn + 1) % 2;
+						} else {
+							doublePopup.show(primaryStage, 880, 720);
+						}
+					} else {
+						turn = (curturn + 1) % 2;
 					}
 				});
 			}
@@ -286,11 +290,9 @@ public class AppController implements Initializable {
 		case 9:// 당신의 땅과 상대편의 땅을 바꿉니다.
 			takeLand(1);
 			break;
-		case 11:
-			// 가장 비싼 땅을 반액에 팔음. 선물이 지어진 경우 반액에 처분.
+		case 11: // 가장 비싼 땅을 반액에 팔음. 선물이 지어진 경우 반액에 처분.
 			break;
-		case 12:
-			// 모든 땅 반납
+		case 12: // 모든 땅 반납
 			break;
 		case 13:
 			money[turn] = money[turn] - (money[turn] / 2);
@@ -314,7 +316,8 @@ public class AppController implements Initializable {
 			}
 			break;
 		case 15: // 한턴 쉽니다.
-			bre = 1;
+			bre[(curturn + 1) % 2] = 1;
+			brecalcu();
 			break;
 		case 16:
 			// 지구로 돌아갑니다. 수고비를 받습니다.
@@ -405,7 +408,7 @@ public class AppController implements Initializable {
 			break;
 
 		case 26: // 주사위 한번 더
-			bre = 2;
+			bre[curturn] = 1;
 			break;
 		case 27:
 			money[turn] += 200000;
@@ -424,8 +427,7 @@ public class AppController implements Initializable {
 			}
 			break;
 
-		case 29:
-			// 5칸 더 앞으로 전진.
+		case 29: // 5칸 더 앞으로 전진.
 			Cardposi = 6;
 			posi2 = position[turn];
 			setPosition2(posi2);
@@ -539,7 +541,8 @@ public class AppController implements Initializable {
 				anchorPane = (AnchorPane) FXMLLoader.load(getClass().getResource("secretCard.fxml"));
 				ImageView secretCard = (ImageView) anchorPane.lookup("#secretCard");
 				int cardNum;
-				if (randQueue.poll() == null) { // 모든 비밀카드가 오픈되고 나면 비밀카드 다시 채워줌
+				
+				if (randQueue.size() == 0) { // 모든 비밀카드가 오픈되고 나면 비밀카드 다시 채워줌
 					setSecretCard();
 					cardNum = randQueue.poll();
 				} else {
@@ -600,9 +603,11 @@ public class AppController implements Initializable {
 					setWarp(anchorPane, dialog2);
 					Complete.setVisible(false);
 				} else if (name.equals("조난기지")) {
-					bre = 1;
+					bre[(curturn + 1) % 2] = 1;
+					brecalcu();
 				} else if (name.equals("블랙홀")) {
-					bre = 3;
+					bre[(curturn + 1) % 2] = 2;
+					brecalcu();
 				} else {
 					Complete.setVisible(true);
 				}
@@ -615,6 +620,17 @@ public class AppController implements Initializable {
 		Scene scene = new Scene(anchorPane);
 		dialog2.setScene(scene);
 		dialog2.show();
+
+	}
+	
+	public void brecalcu() {
+		if (bre[curturn] >= bre[(curturn + 1) % 2]) {
+			bre[curturn] = bre[curturn] - bre[(curturn + 1) % 2];
+			bre[(curturn + 1) % 2] = 0;
+		} else {
+			bre[(curturn + 1) % 2] = bre[(curturn + 1) % 2] - bre[curturn];
+			bre[curturn] = 0;
+		}
 
 	}
 
