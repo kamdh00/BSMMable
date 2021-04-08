@@ -36,5 +36,15 @@
             <Font size="15.0" />
          </font>
       </Label>
+      <Label fx:id="myWinLose" alignment="CENTER" contentDisplay="CENTER" layoutX="256.0" layoutY="587.0" text="Label" textFill="WHITE">
+         <font>
+            <Font size="15.0" />
+         </font>
+      </Label>
+      <Label fx:id="yourWinLose" alignment="CENTER" contentDisplay="CENTER" layoutX="256.0" layoutY="5.0" text="Label" textFill="#bef5b8">
+         <font>
+            <Font size="15.0" />
+         </font>
+      </Label>
    </children>
 </AnchorPane>

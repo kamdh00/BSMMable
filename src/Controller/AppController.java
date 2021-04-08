@@ -2,12 +2,17 @@ package Controller;
 
 import java.io.IOException;
 import java.net.URL;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Random;
 import java.util.ResourceBundle;
 
+import conn.DBConn;
 import javafx.animation.PathTransition;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
@@ -16,7 +21,10 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Node;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.Label;
@@ -50,15 +58,15 @@ public class AppController implements Initializable {
 	ImageView DiceImg1, DiceImg2;
 	@FXML
 	TextField Money1, Money2;
-	@FXML
-	Label myName, yourName;
 	Label PlanetOwner;
+	@FXML
+	Label myName, yourName, myWinLose, yourWinLose;	
 	private static int TOP = 0;
 	private static int LEFT = 1;
 	private static int BOTTOM = 2;
 	private static int RIGHT = 3;
 	int posi[] = { BOTTOM, BOTTOM };
-	private static int money[] = { 30000000, 30000000 };
+	private static int money[] = { 200000, 200000 };
 	private static String user[] = { "kam", "yoo" }; // 임시로 하드코딩 추후 로그인 한 사용자를 Main에서 받는것으로 대체 필요
 	int position[] = { 0, 0 };
 	int d1;
@@ -68,11 +76,14 @@ public class AppController implements Initializable {
 	int Cardposi = 0; // 카드로 나온 포지션.
 	int bre[] = { 0, 0 };
 
+	int cnt1 = 0;// 상대방 땅 개수
+	int cnt2 = 0;// 내땅 개수
 	int cntX[] = { 0, 0 };
 	int cntY[] = { 0, 0 };
 	int buy[];
 	int turn = 0;
 	int curturn = 0;
+	int win = 1, lose = 1;
 	private Stage primaryStage;
 	private AnchorPane root;
 	ArrayList<PieceXY> pieceXY = new ArrayList<PieceXY>();
@@ -96,11 +107,85 @@ public class AppController implements Initializable {
 		Money2.setText("보유금액 : " + money[1] + "원");
 		Money2.setEditable(false);
 		btn1.setOnAction((event) -> rollTheDice(event));
+		checkMoney();
 	}
 	
+	public void checkMoney() {
+		Thread thread = new Thread() {
+
+			@Override
+			public void run() {
+				while (money[curturn] >= 0) {
+					try {
+						Thread.sleep(10);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+				}
+				Platform.runLater(() -> {
+					Stage findialog = new Stage(StageStyle.UTILITY);
+					findialog.initModality(Modality.WINDOW_MODAL);
+					findialog.initOwner(primaryStage);
+					AnchorPane anchorPane = null;
+					try {
+						anchorPane = (AnchorPane) FXMLLoader.load(getClass().getResource("fin_dialog.fxml"));
+					} catch (IOException e2) {
+						e2.printStackTrace();
+					}
+					Label FinMessage = (Label) anchorPane.lookup("#FinMessage");
+					FinMessage.setText("승리 : " + user[(curturn + 1) % 2]);
+					Button FinButton = (Button) anchorPane.lookup("#FinButton");
+					FinButton.setOnAction(e -> {
+						findialog.close();
+						Connection con = null;
+						PreparedStatement psmt = null;
+						try {
+							con = DBConn.getConnection();
+						} catch (SQLException e1) {
+							System.out.println("DB연결실패");
+						}
+						String sql = "UPDATE MEMBER SET WIN=" + (++win) + " where id= '" + user[(curturn + 1) % 2]
+								+ "'";
+						try {
+							psmt = con.prepareStatement(sql);
+							psmt.executeUpdate();
+							// psmt.executeQuery();
+						} catch (SQLException e1) {
+							System.out.println("db에러");
+						}
+						sql = "UPDATE MEMBER SET LOSE=" + (++lose) + " where id= '" + user[curturn] + "'";
+						try {
+							psmt = con.prepareStatement(sql);
+							psmt.executeUpdate();
+							// psmt.executeQuery();
+						} catch (SQLException e1) {
+							System.out.println("db에러");
+						}
+
+						primaryStage.close();
+					});
+					Scene scene = new Scene(anchorPane);
+					findialog.setScene(scene);
+					findialog.show();
+
+				});
+
+			}
+
+		};
+		thread.setDaemon(true);
+		thread.start();
+	}
+
+	public void setWinLose(int win, int lose) {
+		this.win = win;
+		this.lose = lose;
+		myWinLose.setText("승 : " + win + " 패 : " + lose);
+	}
+
 	public void setUser(String id) {
 		this.user[0] = id;
-		myName.setText(id+" 님");
+		myName.setText(id + " 님");
 	}
 
 	public void rollTheDice(ActionEvent e) {
@@ -112,6 +197,12 @@ public class AppController implements Initializable {
 
 			@Override
 			public void run() {
+				if (bre[curturn] != 0) {
+					bre[curturn]--;
+					curturn = (curturn + 1) % 2;
+					turn = curturn;
+
+				}
 				Platform.runLater(() -> {
 					setDice();
 				});
@@ -146,30 +237,25 @@ public class AppController implements Initializable {
 				}
 
 				Platform.runLater(() -> {
-					System.out.println("bre:" + bre);
+					
 					btn1.setDisable(false);
 					showDialog();
-					if (d1 != d2 && bre[curturn] == 0) {
+					
+					if (d1 != d2) {
+
 						if (curturn == 0) {
 							turn = 1;
 						} else {
 							turn = 0;
 						}
-					} else if (bre[curturn] == 1) {
+
+					} else {
 						bre[curturn] = 0;
 
-					} else if (bre[curturn] == 2) {
-						bre[curturn] = 1;
+						doublePopup.show(primaryStage, 880, 720);
 
-					} else if (d1 == d2) {
-						if (bre[(curturn + 1) % 2] != 0) {
-							turn = (curturn + 1) % 2;
-						} else {
-							doublePopup.show(primaryStage, 880, 720);
-						}
-					} else {
-						turn = (curturn + 1) % 2;
 					}
+
 				});
 			}
 
@@ -211,11 +297,12 @@ public class AppController implements Initializable {
 		case 0: // 소유한 본인땅의 모든 건물 삭제
 			for (int i = 0; i < planetData.size(); i++) {
 				if (user[turn].equals(planetData.get(i).owner)) {
-					for (int j = 0; j < planetData.get(i).building.size(); j++) {
+					for (int j = 1; j < planetData.get(i).building.size(); j++) {
 						root.getChildren().remove(planetData.get(i).building.get(j));
+
 					}
-					planetData.get(i).owner = "X";
-					planetData.get(i).count = 0;
+					planetData.get(i).count = 1;
+
 				}
 			}
 			break;
@@ -291,8 +378,49 @@ public class AppController implements Initializable {
 			takeLand(1);
 			break;
 		case 11: // 가장 비싼 땅을 반액에 팔음. 선물이 지어진 경우 반액에 처분.
+			int max = 0;
+			int tmp = 0;
+			System.out.println("money" + money[turn]);
+			for (int i = 0; i < planetData.size(); i++) {
+				if (user[turn].equals(planetData.get(i).owner)) {
+
+					max = (max > planetData.get(i).price) ? max : planetData.get(i).price;
+
+				}
+
+			}
+			for (int i = 0; i < planetData.size(); i++) {
+				if (user[turn].equals(planetData.get(i).owner)) {
+					for (int j = 0; j < planetData.get(i).building.size(); j++) {
+						if (max == planetData.get(i).price) {
+							root.getChildren().remove(planetData.get(i).building.get(j));
+							planetData.get(i).owner = "X";
+							planetData.get(i).count = 0;
+							if (tmp == 0) {
+								money[turn] -= ((max + ((max / 2) * (planetData.get(i).building.size() - 1))) / 2);
+								tmp++;
+							}
+
+						}
+					}
+				}
+			}
+			if (turn == 0) {
+				Money1.setText("보유금액 : " + money[turn] + "원");
+			} else {
+				Money2.setText("보유금액 : " + money[turn] + "원");
+			}
 			break;
 		case 12: // 모든 땅 반납
+			for (int i = 0; i < planetData.size(); i++) {
+				if (user[turn].equals(planetData.get(i).owner)) {
+					for (int j = 0; j < planetData.get(i).building.size(); j++) {
+						root.getChildren().remove(planetData.get(i).building.get(j));
+					}
+					planetData.get(i).owner = "X";
+					planetData.get(i).count = 0;
+				}
+			}
 			break;
 		case 13:
 			money[turn] = money[turn] - (money[turn] / 2);
@@ -316,7 +444,7 @@ public class AppController implements Initializable {
 			}
 			break;
 		case 15: // 한턴 쉽니다.
-			bre[(curturn + 1) % 2] = 1;
+			bre[curturn] = 1;
 			brecalcu();
 			break;
 		case 16:
@@ -356,6 +484,7 @@ public class AppController implements Initializable {
 			takeLand(2);
 			break;
 		case 20: // 건물 두개 지을 땅 선택 (자신의 땅이여야함. 땅이 없을시 무효.)
+			takeLand(3);
 			break;
 
 		case 21:
@@ -408,7 +537,7 @@ public class AppController implements Initializable {
 			break;
 
 		case 26: // 주사위 한번 더
-			bre[curturn] = 1;
+			bre[(curturn + 1) % 2]++;
 			break;
 		case 27:
 			money[turn] += 200000;
@@ -534,14 +663,14 @@ public class AppController implements Initializable {
 			dialog.setAlwaysOnTop(true);
 			dialog.show();
 
-		}
+		} // 이용료 지불 끝
 
 		try {
 			if (name.equals("비밀카드")) {
 				anchorPane = (AnchorPane) FXMLLoader.load(getClass().getResource("secretCard.fxml"));
 				ImageView secretCard = (ImageView) anchorPane.lookup("#secretCard");
 				int cardNum;
-				
+
 				if (randQueue.size() == 0) { // 모든 비밀카드가 오픈되고 나면 비밀카드 다시 채워줌
 					setSecretCard();
 					cardNum = randQueue.poll();
@@ -553,7 +682,9 @@ public class AppController implements Initializable {
 				Image img = new Image("file:../../resources/images/secretCard/" + imgName);
 				secretCard.setImage(img);
 				Button Complete = (Button) anchorPane.lookup("#Complete");
-				Complete.setOnAction(event -> dialog2.close());
+				Complete.setOnAction(event -> {
+					dialog2.close();
+				});
 				actionSecretCard(cardNum, curturn);
 			}
 
@@ -611,7 +742,9 @@ public class AppController implements Initializable {
 				} else {
 					Complete.setVisible(true);
 				}
-				Complete.setOnAction(event -> dialog2.close());
+				Complete.setOnAction(event -> {
+					dialog2.close();
+				});
 			}
 		} catch (IOException e2) {
 			e2.printStackTrace();
@@ -622,11 +755,14 @@ public class AppController implements Initializable {
 		dialog2.show();
 
 	}
-	
+
 	public void brecalcu() {
 		if (bre[curturn] >= bre[(curturn + 1) % 2]) {
 			bre[curturn] = bre[curturn] - bre[(curturn + 1) % 2];
 			bre[(curturn + 1) % 2] = 0;
+		} else if (bre[0] == bre[1]) {
+			bre[0] = 0;
+			bre[1] = 0;
 		} else {
 			bre[(curturn + 1) % 2] = bre[(curturn + 1) % 2] - bre[curturn];
 			bre[curturn] = 0;
@@ -698,8 +834,7 @@ public class AppController implements Initializable {
 			}
 
 		}
-		choiceBox.setValue("워프 이동X");
-		System.out.println(choiceBox.getItems().indexOf("비밀카드"));
+		choiceBox.setValue("워프 이동X");		
 		button.setLayoutX(260);
 		button.setLayoutY(150);
 		button.setPrefWidth(100);
@@ -787,7 +922,7 @@ public class AppController implements Initializable {
 		ChoiceBox myLand = (ChoiceBox) takeLandPane.lookup("#myLand");
 		Label myLandLabel = (Label) takeLandPane.lookup("#myLandLabel");
 		Label yourLandLabel = (Label) takeLandPane.lookup("#yourLandLabel");
-		if (index != 1) {
+		if (index != 1 && index != 3) {
 			myLand.setVisible(false);
 			myLandLabel.setVisible(false);
 		}
@@ -804,8 +939,10 @@ public class AppController implements Initializable {
 			for (PlanetData pd : planetData) {
 				if (!pd.getOwner().equals(user[curturn]) && !pd.getOwner().equals("X")) {
 					yourLand.getItems().add(pd.name);
+					cnt1++;
 				} else if (pd.getOwner().equals(user[curturn])) {
 					myLand.getItems().add(pd.name);
+					cnt2++;
 				}
 			}
 			break;
@@ -816,15 +953,54 @@ public class AppController implements Initializable {
 				}
 			}
 			break;
+		case 3:
+			yourLand.setVisible(false);
+			yourLandLabel.setVisible(false);
+			for (PlanetData pd : planetData) {
+				if (pd.getOwner().equals(user[curturn])) {
+					if (pd.count <= 2) {
+						myLand.getItems().add(pd.name);
+						cnt1++;
+					}
+				}
+			}
+			break;
 		}
 
 		Button Complete = (Button) takeLandPane.lookup("#Complete");
 		Complete.setOnAction(event -> dialog.close());
 		choiceLand = (Button) takeLandPane.lookup("#choiceLand");
 		if (index == 1) {
-			choiceLand.setOnAction(event -> changeLand(yourLand, myLand));
+			if (cnt1 != 0 && cnt2 != 0) {
+				choiceLand.setOnAction(event -> changeLand(yourLand, myLand));
+				cnt1 = 0;
+				cnt2 = 0;
+			} else {
+				Alert alert = new Alert(AlertType.WARNING);
+				alert.setTitle("알림");
+				alert.setHeaderText("카드 무효화");
+				alert.setContentText("내땅 혹은 상대방 땅이 없으니 이 카드는 무효화 됩니다.");
+				alert.showAndWait();
+				cnt1 = 0;
+				cnt2 = 0;
+				return;
+			}
+		} else if (index == 3) {
+			if (cnt1 != 0) {
+				choiceLand.setOnAction(event -> getChoice(myLand, index));
+				cnt1 = 0;
+			} else {
+				Alert alert = new Alert(AlertType.WARNING);
+				alert.setTitle("알림");
+				alert.setHeaderText("카드 무효화");
+				alert.setContentText("땅이 없으므로 이 카드는 무효화 됩니다.");
+				alert.showAndWait();
+				cnt1 = 0;
+				cnt2 = 0;
+				return;
+			}
 		} else {
-			choiceLand.setOnAction(event -> getChoice(yourLand));
+			choiceLand.setOnAction(event -> getChoice(yourLand, index));
 		}
 
 		Scene scene = new Scene(takeLandPane);
@@ -837,6 +1013,9 @@ public class AppController implements Initializable {
 		String[] name = { choiceYourBox.getValue(), choiceMyBox.getValue() };
 		int nextTurn = (curturn + 1) % 2;
 		System.out.println(curturn + "," + nextTurn + ":" + name[0] + "," + name[1]);
+		if (name[0] == null || name[1] == null) {
+			return;
+		}
 
 		for (int i = 0; i < planetData.size(); i++) {
 			if (planetData.get(i).name.equals(name[0])) { // 선택한 상대 땅일때 동작
@@ -903,24 +1082,44 @@ public class AppController implements Initializable {
 	}
 
 	// 비밀카드로 땅 선택시 동작 함수
-	private void getChoice(ChoiceBox<String> choiceBox) {
+	private void getChoice(ChoiceBox<String> choiceBox, int index) {
 		String name = choiceBox.getValue();
 		ImageView flag = new ImageView();
+		
+		if (name == null) {
+			return;
+		}
 
 		for (int i = 0; i < planetData.size(); i++) {
-			if (planetData.get(i).name.equals(name)) { // 선택한 땅일때 동작
-				// 플래그 추가 혹은 변경
-				if (!planetData.get(i).owner.equals("X")) { // 상대땅 가져오기 일때만 기존 플레그 제거
-					ChangeLandFlag(i, curturn); // 땅 가져올대 플래그들 변경 함수
+			if (planetData.get(i).name.equals(name)) {
+				// 선택한 땅일때 동작
+				if (index == 3) {
+					if (planetData.get(i).count == 1) {
+						setBuilding(i, -33);
+						setBuilding(i, -10);
+						planetData.get(i).count += 2;
+					} else if (planetData.get(i).count == 2) {
+						setBuilding(i, -10);
+						setBuilding(i, 13);
+						planetData.get(i).count += 2;
+					}
+
 				} else {
-					setFlag(i, curturn); // 플래그 설치 함수
-					planetData.get(i).count++;
-				}
-				// 소유자 변경
-				if (turn == 0) {
-					planetData.get(i).owner = user[1];
-				} else {
-					planetData.get(i).owner = user[0];
+					// 플래그 추가 혹은 변경
+					if (!planetData.get(i).owner.equals("X")) { // 상대땅 가져오기 일때만 기존 플레그 제거
+						ChangeLandFlag(i, curturn); // 땅 가져올대 플래그들 변경 함수
+						if (turn == 0) {
+							planetData.get(i).owner = user[1];
+						} else {
+							planetData.get(i).owner = user[0];
+						}
+
+					} else {
+						setFlag(i, curturn); // 플래그 설치 함수
+						planetData.get(i).count++;
+						planetData.get(i).owner = user[turn];
+					}
+					// 소유자 변경
 				}
 			}
 		}
@@ -947,7 +1146,11 @@ public class AppController implements Initializable {
 		dialog.initOwner(primaryStage);
 		dialog.setTitle("구매 확인");
 		int cost = 0;
-		cost = price + (price / 2) * (planetData.get(position[turn]).count - 1);
+		if (planetData.get(position[turn]).count == 0) {
+			cost = price;
+		} else {
+			cost = price + (price / 2) * (planetData.get(position[turn]).count - 1);
+		}
 		AnchorPane anchorPane = null;
 		int nextTurn = (turn + 1) % 2;
 
@@ -1063,6 +1266,15 @@ public class AppController implements Initializable {
 					} else {
 						Money2.setText("보유금액 : " + money[turn] + "원");
 					}
+				} else {
+					Alert alert = new Alert(AlertType.WARNING);
+					alert.setTitle("알림");
+					alert.setHeaderText("구매 불가능");
+					alert.setContentText("이미 지을 수 있는 빌딩 개수의최대입니다.");
+					alert.showAndWait();
+					cnt1 = 0;
+					cnt2 = 0;
+					return;
 				}
 			}
 
@@ -1072,9 +1284,6 @@ public class AppController implements Initializable {
 		Scene scene = new Scene(anchorPane);
 		dialog.setScene(scene);
 		dialog.show();
-
-		ChangeLandFlag(1, 0);
-		ChangeLandFlag(2, 1);
 	}
 
 	public void setPosition() {

@@ -48,34 +48,44 @@ public class LoginController implements Initializable {
 	Connection con = null;
 	PreparedStatement psmt = null;
 	ResultSet rs = null;
-	
+
 	@FXML
-	public void handleButtonAction(MouseEvent event) {
+	public void handleButtonAction(MouseEvent event) throws SQLException {
 
 		if (event.getSource() == btnSignin) {
 			String id = logIn();
+			int win = rs.getInt(2);
+			int lose = rs.getInt(3);
+			System.out.println("win : " + win + " lose : " + lose);
 			// login here
 			if (!id.equals("Error")) {
 				try {
-                    Node node = (Node) event.getSource();
-                    Stage stage = (Stage) node.getScene().getWindow();
-                    stage.close();
-                    
-                    FXMLLoader loader= new FXMLLoader(getClass().getResource("../application/Root.fxml"));                    
-              	  	AnchorPane root = loader.load();
-              	  	AppController controller = loader.getController();
-              	  	controller.setPrimaryStage(stage);
-              	  	controller.setRoot(root);
-              	  	controller.setUser(id);
-              	  	Scene scene = new Scene(root);
-              	  	stage.setTitle("BlueMarble");
-              	  	stage.setScene(scene);
-              	  	stage.show();
+					Node node = (Node) event.getSource();
+					Stage stage = (Stage) node.getScene().getWindow();
+					stage.close();
+
+					FXMLLoader loader = new FXMLLoader(getClass().getResource("../application/Root.fxml"));
+					AnchorPane root = loader.load();
+					AppController controller = loader.getController();
+					controller.setPrimaryStage(stage);
+					controller.setRoot(root);
+					controller.setUser(id);
+					controller.setWinLose(win, lose);
+
+					Scene scene = new Scene(root);
+					stage.setTitle("BlueMarble");
+					stage.setScene(scene);
+					stage.show();
 				} catch (IOException ex) {
 					System.err.println(ex.getMessage());
 				}
 
 			}
+
+			if (rs != null)
+				rs.close();
+			con.close();
+			psmt.close();
 		}
 	}
 
@@ -106,7 +116,7 @@ public class LoginController implements Initializable {
 			status = "Error";
 		} else {
 			// query
-			String sql = "SELECT id FROM MEMBER Where id = '" + id + "' and pwd = '" + pwd + "'";
+			String sql = "SELECT id,WIN,LOSE FROM MEMBER Where id = '" + id + "' and pwd = '" + pwd + "'";
 			try {
 				psmt = con.prepareStatement(sql);
 				rs = psmt.executeQuery();
