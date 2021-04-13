@@ -1,10 +1,5 @@
 package Controller;
 
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 import java.io.IOException;
 import java.net.URL;
 import java.sql.Connection;
@@ -14,6 +9,8 @@ import java.sql.SQLException;
 import java.util.ResourceBundle;
 
 import conn.DBConn;
+import conn.PlayerClient;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -48,51 +45,109 @@ public class LoginController implements Initializable {
 	Connection con = null;
 	PreparedStatement psmt = null;
 	ResultSet rs = null;
+	PlayerClient SocketConnect;
+	String id = "success";
+	int win;
+	int lose;
 
 	@FXML
 	public void handleButtonAction(MouseEvent event) throws SQLException {
 
 		if (event.getSource() == btnSignin) {
-			String id = logIn();
-			int win = rs.getInt(2);
-			int lose = rs.getInt(3);
-			System.out.println("win : " + win + " lose : " + lose);
+			logIn();
 			// login here
-			if (!id.equals("Error")) {
-				try {
-					Node node = (Node) event.getSource();
-					Stage stage = (Stage) node.getScene().getWindow();
-					stage.close();
+			getMsg();
+		}
+	}
 
-					FXMLLoader loader = new FXMLLoader(getClass().getResource("../application/Root.fxml"));
-					AnchorPane root = loader.load();
-					AppController controller = loader.getController();
-					controller.setPrimaryStage(stage);
-					controller.setRoot(root);
-					controller.setUser(id);
-					controller.setWinLose(win, lose);
+	public void getMsg() {
+		Thread thread = new Thread() {
+			@Override
+			public void run() {
+				String msg;
+				while (true) {
+					if (SocketConnect.getMsg() != null) {
+						msg = SocketConnect.getMsg();
 
-					Scene scene = new Scene(root);
-					stage.setTitle("BlueMarble");
-					stage.setScene(scene);
-					stage.show();
-				} catch (IOException ex) {
-					System.err.println(ex.getMessage());
+						System.out.println(msg);
+						Platform.runLater(() -> {
+							if (msg.equals("Error")) {
+								setLblError(Color.TOMATO, "Enter Correct ID/Password");
+								id = "Error";
+								SocketConnect.setMsg(null);
+							} else {
+								setLblError(Color.GREEN, "Login Successful..Redirecting..");
+							}
+
+						});
+
+						break;
+					}
+					try {
+						Thread.sleep(10);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+				}
+				if (!msg.equals("Error")) {
+					Platform.runLater(() -> {
+						Stage stage = (Stage) btnSignin.getScene().getWindow();
+						stage.close();
+
+						FXMLLoader loader = new FXMLLoader(getClass().getResource("../application/Root.fxml"));
+						AnchorPane root;
+						try {
+							root = loader.load();
+							AppController controller = loader.getController();
+							controller.setPrimaryStage(stage);
+							controller.setRoot(root);
+							controller.setSocket(SocketConnect);
+							Scene scene = new Scene(root);
+							stage.setTitle("BlueMarble");
+							stage.setScene(scene);
+							stage.show();
+
+						} catch (IOException e) {
+							System.err.println(e.getMessage());
+						}
+
+					});
+
 				}
 
 			}
 
-			if (rs != null)
-				rs.close();
-			con.close();
-			psmt.close();
-		}
+		};
+		// thread.setDaemon(true);
+		thread.start();
 	}
 
-	@Override
-	public void initialize(URL url, ResourceBundle rb) {
-		// TODO
-		if (con == null) {
+	// 로그인 체크
+	private void logIn() {
+		String id = txtUsername.getText();
+		String pwd = txtPassword.getText();
+		System.out.println(id + "," + pwd);
+		if (id.isEmpty() || pwd.isEmpty()) {
+			setLblError(Color.TOMATO, "Empty credentials");
+			id = "Error";
+		} else {
+			// query
+			String sql = "SELECT id,WIN,LOSE FROM MEMBER Where id = '" + id + "' and pwd = '" + pwd + "'";
+			SocketConnect.getOutMsg().println("Login/" + sql);
+
+		}
+
+	}
+
+	private void setLblError(Color color, String text) {
+		lblErrors.setTextFill(color);
+		lblErrors.setText(text);
+		System.out.println(text);
+	}
+
+	public void setSocket(PlayerClient SocketConnect) {
+		this.SocketConnect = SocketConnect;
+		if (SocketConnect == null) {
 			lblErrors.setTextFill(Color.TOMATO);
 			lblErrors.setText("Server Error : Check");
 		} else {
@@ -101,44 +156,9 @@ public class LoginController implements Initializable {
 		}
 	}
 
-	public LoginController() throws SQLException {
-		con = DBConn.getConnection();
-	}
+	@Override
+	public void initialize(URL arg0, ResourceBundle arg1) {
+		// TODO Auto-generated method stub
 
-	// 로그인 체크
-	private String logIn() {
-		String status = "Success";
-		String id = txtUsername.getText();
-		String pwd = txtPassword.getText();
-		System.out.println(id + "," + pwd);
-		if (id.isEmpty() || pwd.isEmpty()) {
-			setLblError(Color.TOMATO, "Empty credentials");
-			status = "Error";
-		} else {
-			// query
-			String sql = "SELECT id,WIN,LOSE FROM MEMBER Where id = '" + id + "' and pwd = '" + pwd + "'";
-			try {
-				psmt = con.prepareStatement(sql);
-				rs = psmt.executeQuery();
-				if (!rs.next()) {
-					setLblError(Color.TOMATO, "Enter Correct ID/Password");
-					status = "Error";
-				} else {
-					status = rs.getString(1);
-					setLblError(Color.GREEN, "Login Successful..Redirecting..");
-				}
-			} catch (SQLException ex) {
-				System.err.println(ex.getMessage());
-				status = "Exception";
-			}
-		}
-
-		return status;
-	}
-
-	private void setLblError(Color color, String text) {
-		lblErrors.setTextFill(color);
-		lblErrors.setText(text);
-		System.out.println(text);
 	}
 }

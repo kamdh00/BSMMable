@@ -1,5 +1,7 @@
 package application;
 
+import Controller.LoginController;
+import conn.PlayerClient;
 import javafx.application.Application;
 import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
@@ -14,11 +16,16 @@ public class Main extends Application {
 	// define your offsets here
 	private double xOffset = 0;
 	private double yOffset = 0;
+	PlayerClient SocketConnect;
 
 	@Override
 	public void start(Stage primaryStage) {
 		try {
-			Parent login = FXMLLoader.load(getClass().getResource("Login.fxml"));
+			SocketConnect = new PlayerClient("127.0.0.1");
+			FXMLLoader loader = new FXMLLoader(getClass().getResource("Login.fxml"));						
+			Parent login = loader.load();
+			LoginController loginController = loader.getController();
+			loginController.setSocket(SocketConnect);
 			primaryStage.initStyle(StageStyle.DECORATED);
 			primaryStage.setMaximized(false);
 

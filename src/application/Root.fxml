@@ -6,13 +6,11 @@
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.AnchorPane?>
-<?import javafx.scene.shape.Circle?>
 <?import javafx.scene.text.Font?>
 
 <AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="610.0" prefWidth="890.0" styleClass="bodybg" stylesheets="@../../resources/background.css" xmlns="http://javafx.com/javafx/15.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Controller.AppController">
    <children>
       <Button fx:id="btn1" layoutX="425.0" layoutY="431.0" mnemonicParsing="false" text="클릭" />
-      <Circle fx:id="C1" fill="DODGERBLUE" layoutX="820.0" layoutY="500.0" radius="17.0" stroke="BLACK" strokeType="INSIDE" />
       <ImageView fx:id="DiceImg1" fitHeight="72.0" fitWidth="72.0" layoutX="354.0" layoutY="359.0" pickOnBounds="true" preserveRatio="true">
          <image>
             <Image url="@../../resources/images/dice1.PNG" />
@@ -24,7 +22,6 @@
          </image>
       </ImageView>      
       <TextField fx:id="Money1" layoutX="81.0" layoutY="585.0" />
-      <Circle fx:id="C2" fill="#ff1f1f" layoutX="819.0" layoutY="522.0" radius="17.0" stroke="BLACK" strokeType="INSIDE" />
       <TextField fx:id="Money2" layoutX="81.0" layoutY="3.0" />
       <Label fx:id="yourName" alignment="CENTER" layoutX="10.0" layoutY="2.0" prefHeight="22.0" prefWidth="57.0" text="상대방" textFill="#bef5b8">
          <font>
@@ -36,15 +33,45 @@
             <Font size="15.0" />
          </font>
       </Label>
-      <Label fx:id="myWinLose" alignment="CENTER" contentDisplay="CENTER" layoutX="256.0" layoutY="587.0" text="Label" textFill="WHITE">
+      <Label fx:id="myWinLose" alignment="CENTER" contentDisplay="CENTER" layoutX="21.0" layoutY="566.0" text="Label" textFill="WHITE">
          <font>
             <Font size="15.0" />
          </font>
       </Label>
-      <Label fx:id="yourWinLose" alignment="CENTER" contentDisplay="CENTER" layoutX="256.0" layoutY="5.0" text="Label" textFill="#bef5b8">
+      <Label fx:id="yourWinLose" alignment="CENTER" contentDisplay="CENTER" layoutX="21.0" layoutY="25.0" text="Label" textFill="#bef5b8">
          <font>
             <Font size="15.0" />
          </font>
       </Label>
+      <Label fx:id="card2" layoutX="251.0" layoutY="5.0" text="card x" textFill="WHITE">
+         <font>
+            <Font size="16.0" />
+         </font>
+      </Label>
+      <Label fx:id="cardcnt2" layoutX="298.0" layoutY="1.0" text="0" textFill="WHITE">
+         <font>
+            <Font size="21.0" />
+         </font>
+      </Label>
+      <Label fx:id="card1" layoutX="251.0" layoutY="585.0" text="card x" textFill="WHITE">
+         <font>
+            <Font size="16.0" />
+         </font>
+      </Label>
+      <Label fx:id="cardcnt1" layoutX="299.0" layoutY="581.0" text="0" textFill="WHITE">
+         <font>
+            <Font size="21.0" />
+         </font>
+      </Label>
+      <ImageView fx:id="C1" fitHeight="50.0" fitWidth="40.0" layoutX="802.0" layoutY="468.0" preserveRatio="true">
+         <image>
+            <Image url="@../../resources/images/rocket1.png" />
+         </image>
+      </ImageView>
+      <ImageView fx:id="C2" fitHeight="50.0" fitWidth="30.0" layoutX="808.0" layoutY="493.0" preserveRatio="true">
+         <image>
+            <Image url="@../../resources/images/rocket2.png" />
+         </image>
+      </ImageView>
    </children>
 </AnchorPane>
