@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.util.Scanner;
 
 
 
@@ -50,25 +49,19 @@ public class PlayerClient implements Runnable {
     
     public void connectServer() {
         try {
-           
             socket = new Socket(ip, 8888);
             System.out.println("[Client]Server 연결 성공!!");
             inMsg = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             outMsg = new PrintWriter(socket.getOutputStream(), true);
             thread = new Thread(this);
             thread.start();
- 
            
         } catch(Exception e) {
             System.out.println("[Client]connectServer() Exception 발생!!");
         }
     }
     public void run() {
-
-        
-        
         status = true;
-        
         while(status) {
             try {           
                 msg = inMsg.readLine();                
