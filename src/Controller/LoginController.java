@@ -130,24 +130,34 @@ public class LoginController implements Initializable {
 		Thread thread = new Thread() {
 			@Override
 			public void run() {
-				String[] rmsg;
-				String msg;
+				String[] rmsg = null;
+				String msg = null;
 				while (true) {
-					if (SocketConnect.getMsg() != null) {
-						msg = SocketConnect.getMsg();
+					try {
+						msg = SocketConnect.getInMsg().readLine();
+					} catch (IOException e1) {
+						System.out.println("소켓 통신 error");
+					}
+					if (msg != null) {
 						rmsg = msg.split("/");
-						id = rmsg[1];
+						try {
+							id = rmsg[1];
+						} catch (Exception e2) {
+
+						}
+
 						System.out.println(id);
-						Platform.runLater(() -> {
-							if (msg.equals("Error")) {
+						if (msg.equals("Error")) {
+							Platform.runLater(() -> {
 								setLblError(Color.TOMATO, "Enter Correct ID/Password");
 								id = "Error";
 								SocketConnect.setMsg(null);
-							} else {
+							});
+						} else {
+							Platform.runLater(() -> {
 								setLblError(Color.GREEN, "Login Successful..Redirecting..");
-							}
-
-						});
+							});
+						}
 
 						break;
 					}
@@ -158,6 +168,7 @@ public class LoginController implements Initializable {
 					}
 				}
 				if (!msg.equals("Error")) {
+					String login = msg;
 					Platform.runLater(() -> {
 						Stage stage = (Stage) btnSignin.getScene().getWindow();
 						stage.close();
@@ -170,6 +181,7 @@ public class LoginController implements Initializable {
 							controller.setPrimaryStage(stage);
 							controller.setRoot(root);
 							controller.setSocket(SocketConnect);
+							controller.setLogin(login);
 							Scene scene = new Scene(root);
 							stage.setTitle("BlueMarble");
 							stage.setScene(scene);

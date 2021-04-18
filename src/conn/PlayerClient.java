@@ -4,10 +4,11 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.Scanner;
 
 
 
-public class PlayerClient implements Runnable {
+public class PlayerClient{
     private String ip;
     private String id;
     private Socket socket;
@@ -53,24 +54,9 @@ public class PlayerClient implements Runnable {
             System.out.println("[Client]Server 연결 성공!!");
             inMsg = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             outMsg = new PrintWriter(socket.getOutputStream(), true);
-            thread = new Thread(this);
-            thread.start();
-           
         } catch(Exception e) {
             System.out.println("[Client]connectServer() Exception 발생!!");
         }
     }
-    public void run() {
-        status = true;
-        while(status) {
-            try {           
-                msg = inMsg.readLine();                
-                System.out.println("pc : "+msg);                
-            } catch(IOException e) {
-                status = false;
-            }
-        }
-
-        System.out.println("[Client]" + thread.getName() + "종료됨");
-    }    
+       
 }

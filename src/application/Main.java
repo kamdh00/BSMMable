@@ -1,6 +1,5 @@
 package application;
 
-
 import Controller.LoginController;
 import conn.PlayerClient;
 import javafx.application.Application;
@@ -9,6 +8,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.input.MouseEvent;
+
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
@@ -20,11 +20,12 @@ public class Main extends Application {
 	PlayerClient SocketConnect;
 	LoginController loginController;
 	String id;
+
 	@Override
 	public void start(Stage primaryStage) {
 		try {
-			SocketConnect = new PlayerClient("127.0.0.1");			
-			FXMLLoader loader = new FXMLLoader(getClass().getResource("Login.fxml"));						
+			SocketConnect = new PlayerClient("127.0.0.1");
+			FXMLLoader loader = new FXMLLoader(getClass().getResource("Login.fxml"));
 			Parent login = loader.load();
 			loginController = loader.getController();
 			loginController.setSocket(SocketConnect);
@@ -46,28 +47,25 @@ public class Main extends Application {
 					primaryStage.setY(event.getScreenY() - yOffset);
 				}
 			});
-			
+
 			Scene scene = new Scene(login);
 			primaryStage.setScene(scene);
 			primaryStage.show();
-
 		} catch (Exception e) {
 			e.printStackTrace();
-		}		
+		}
 	}
-	
 
 	@Override
 	public void stop() throws Exception {
-		
 		if (!loginController.getId().equals("success")) {
 			System.out.println(loginController.getId());
-			SocketConnect.getOutMsg().println("Finish/"+loginController.getId());
+			SocketConnect.getOutMsg().println("Finish/" + loginController.getId());
 			System.out.println("stop!");
 		}
+
 		super.stop();
 	}
-
 
 	public static void main(String[] args) {
 		launch(args);
