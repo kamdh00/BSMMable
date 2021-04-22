@@ -5,10 +5,10 @@
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.text.Font?>
 
-<AnchorPane prefHeight="188.0" prefWidth="428.0" xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml">
+<AnchorPane prefHeight="188.0" prefWidth="428.0" style="-fx-background-color: #73aade;" xmlns="http://javafx.com/javafx/15.0.1" xmlns:fx="http://javafx.com/fxml/1">
    <children>
-      <Button id="Complete" layoutX="151.0" layoutY="115.0" mnemonicParsing="false" prefHeight="22.0" prefWidth="121.0" text="확인" />
-      <Label id="BuyMessage" alignment="CENTER" layoutX="3.0" layoutY="14.0" prefHeight="23.0" prefWidth="421.0" text="천왕성 통행료 1000000원을 지불하였습니다.">
+      <Button id="Complete" layoutX="151.0" layoutY="115.0" mnemonicParsing="false" prefHeight="22.0" prefWidth="121.0" style="-fx-background-color: #bae1f5;" text="확인" />
+      <Label id="BuyMessage" alignment="CENTER" layoutX="4.0" layoutY="23.0" prefHeight="23.0" prefWidth="421.0" text="천왕성 통행료 1000000원을 지불하였습니다." textFill="#fcf7f7">
          <font>
             <Font size="18.0" />
          </font>

@@ -21,7 +21,7 @@
                      </font>
                   </Label>
                   <TextField fx:id="pw_signup" layoutX="31.0" layoutY="160.0" />
-                  <Label layoutX="-7.0" layoutY="160.0" text="PW" textFill="WHITE">
+                  <Label fx:id="pw" layoutX="-7.0" layoutY="160.0" text="PW" textFill="WHITE">
                      <font>
                         <Font size="14.0" />
                      </font>
@@ -31,7 +31,7 @@
                         <Font size="14.0" />
                      </font>
                   </Label>
-                  <Label layoutX="62.0" layoutY="1.0" text="Sign Up" textFill="WHITE">
+                  <Label fx:id="title" layoutX="62.0" layoutY="1.0" text="Sign Up" textFill="WHITE">
                      <font>
                         <Font size="22.0" />
                      </font>

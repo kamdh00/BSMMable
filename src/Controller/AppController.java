@@ -2,18 +2,10 @@ package Controller;
 
 import java.io.IOException;
 import java.net.URL;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.Queue;
 import java.util.Random;
 import java.util.ResourceBundle;
 
-import com.sun.javafx.event.EventQueue;
-
-import conn.DBConn;
 import conn.PlayerClient;
 import javafx.animation.PathTransition;
 import javafx.application.Platform;
@@ -48,7 +40,7 @@ import javafx.util.Duration;
 
 public class AppController implements Initializable {
 	@FXML
-	Button btn1;
+	Button btn1, StartGame, btnGiveup;
 	Button BuyPlanet, CostPlanet, choiceLand;
 	@FXML
 	ImageView C1, C2;
@@ -62,7 +54,7 @@ public class AppController implements Initializable {
 	@FXML
 	Label myName, yourName, myWinLose, yourWinLose;
 	@FXML
-	Label card1, card2;
+	Label card1, card2,Waiting,Double;
 	@FXML
 	Label cardcnt1, cardcnt2;
 	private static int TOP = 0;
@@ -95,10 +87,8 @@ public class AppController implements Initializable {
 	ArrayList<PieceXY> pieceXY = new ArrayList<PieceXY>();
 	ArrayList<PlanetData> planetData = new ArrayList<PlanetData>();
 	PathTransition pathTransition = new PathTransition();
-	Path path;
-	Popup doublePopup = new Popup();
-	Popup passpopup = new Popup();
-	Label doubleLabel = new Label();
+	Path path;	
+	Popup passpopup = new Popup();	
 	// Queue<Integer> randQueue = new LinkedList<Integer>(); // 카드 이미지 번호 랜덤으로 저장
 	ArrayList<Integer> secretCardList = new ArrayList<Integer>(); // 카드 이미지 번호 저장
 	Random rand = new Random();
@@ -106,57 +96,90 @@ public class AppController implements Initializable {
 	PlayerClient SocketConnect;
 	int myturn = -1;
 	int yourturn;
-
-	public String getMyName() {
-		return myName.getText().toString();
-	}
-
+	String id=null;
+	int ready=0;
+	ArrayList<Stage> checkdialog = new ArrayList<Stage>();
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {
 		setSecretCard();
-		doubleLabel.setTextFill(Color.WHITE);
-		doubleLabel.setText("더블!! 한번 더");
-		doubleLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 30px");
-		doublePopup.getContent().add(doubleLabel);
+		Double.setVisible(false);
+		Waiting.setVisible(false);
 		Money1.setText("보유금액 : " + money[0] + "원");
 		Money1.setEditable(false);
 		Money2.setText("보유금액 : " + money[1] + "원");
 		Money2.setEditable(false);
+		btn1.setDisable(true);
+		btnGiveup.setDisable(true);
 		btn1.setOnAction((event) -> rollTheDice());
-		getMsg();
+		StartGame.setOnAction((event) -> StartGame());
+		btnGiveup.setOnAction((event) -> {
+			SocketConnect.getOutMsg().println("GameResult/" + user[yourturn] + "/" + user[myturn]);
+			gameFinish(user[yourturn]);
+		});
 	}
-
+	public void StartGame() {
+		Thread thread = new Thread() {
+			@Override
+			public void run() {
+				int cnt=0;
+				String text[] = {"Player Waiting","Player Waiting.","Player Waiting..","Player Waiting...","Player Waiting....","Player Waiting...."};
+				SocketConnect.getOutMsg().println("Ready/"+id+"/"+win+"/"+lose);				
+				Platform.runLater(()->{
+					StartGame.setVisible(false);
+					btnGiveup.setVisible(false);
+					Waiting.setVisible(true);
+				});
+				
+				while (true) {
+					if (ready==1) {
+						Platform.runLater(()->{
+							Waiting.setText("Game Start!");
+							btnGiveup.setVisible(true);
+						});
+						try {
+							Thread.sleep(1000);
+						} catch (InterruptedException e) {						
+							e.printStackTrace();
+						}
+						Platform.runLater(()->{
+							Waiting.setVisible(false);
+						});
+						
+						break;
+					}
+					int t = cnt++;
+					Platform.runLater(()->{
+						Waiting.setText(text[t]);
+					});
+					
+					if (cnt==6) {
+						cnt=0;
+					}
+					try {
+						Thread.sleep(100);
+					} catch (InterruptedException e) {						
+						e.printStackTrace();
+					}
+				}
+			}
+		};
+		thread.setDaemon(true);
+		thread.start();
+		
+	}
 	public void setLogin(String login) {
 		String[] rmsg = null;
 		String msg = login;
 		rmsg = msg.split("/");
-		if (myturn == -1) {
-			myturn = Integer.parseInt(rmsg[4]);
-			yourturn = (myturn + 1) % 2;
-			user[myturn] = rmsg[1];
-			if (myturn != turn) {
-				Platform.runLater(() -> {
-					btn1.setDisable(true);
-				});
-
-			} else {
-				Platform.runLater(() -> {
-					btn1.setDisable(false);
-				});
-			}
-		}
-
-		if (myturn != Integer.parseInt(rmsg[4])) {
-			setYourData(rmsg[1], Integer.parseInt(rmsg[2]), Integer.parseInt(rmsg[3]));
-		} else {
-			setMyData(rmsg[1], Integer.parseInt(rmsg[2]), Integer.parseInt(rmsg[3]));
-			if (!rmsg[5].equals("NO")) {
-				setYourData(rmsg[5], Integer.parseInt(rmsg[6]), Integer.parseInt(rmsg[7]));
-				user[yourturn] = rmsg[5];
-			}
-		}
-	}
-
+		id=rmsg[0];		
+		win = Integer.parseInt(rmsg[1]);
+		lose = Integer.parseInt(rmsg[2]);
+		Platform.runLater(()->{
+			myName.setText(id);
+			myWinLose.setText("승 : "+win+" 패 : "+lose);
+		});
+		
+	}	
 	public void setSocket(PlayerClient SocketConnect) {
 		this.SocketConnect = SocketConnect;
 	}
@@ -168,7 +191,7 @@ public class AppController implements Initializable {
 				String[] rmsg = null;
 				String msg = null;
 				while (true) {
-					try {
+					try {					
 						msg = SocketConnect.getInMsg().readLine();
 						System.out.println(msg);
 					} catch (IOException e1) {
@@ -177,10 +200,27 @@ public class AppController implements Initializable {
 					if (msg != null) {
 						rmsg = msg.split("/");
 						// SocketConnect.getOutMsg().println("Dice/"+myturn+"/"+movedice"/"+d1+"/"+d2);
-						if (rmsg[0].equals("Login")) {
-							setLogin(msg);
-						}
-						else if (rmsg[0].equals("Dice")) {
+						if (rmsg[0].equals("Start")) {
+							String tname = rmsg[1];
+							int twin = Integer.parseInt(rmsg[2]);
+							int tlose = Integer.parseInt(rmsg[3]);
+							myturn = Integer.parseInt(rmsg[4]);
+							Platform.runLater(() -> {
+								yourName.setText(tname);
+								yourWinLose.setText("승 : " + twin + " 패 : " + tlose);
+
+							});
+
+							yourturn = (myturn + 1) % 2;
+							user[myturn] = id;
+							user[yourturn] = tname;
+							System.out.println("user[0] : " + user[0] + " user[1] : " + user[1]);
+							if (myturn == 0) {
+								btn1.setDisable(false);
+								btnGiveup.setDisable(false);
+							}
+							ready = 1;
+						} else if (rmsg[0].equals("Dice")) {
 							int movedice = Integer.parseInt(rmsg[2]);
 							d1 = Integer.parseInt(rmsg[3]);
 							d2 = Integer.parseInt(rmsg[4]);
@@ -201,11 +241,13 @@ public class AppController implements Initializable {
 							if (myturn != turn) {
 								Platform.runLater(() -> {
 									btn1.setDisable(true);
+									btnGiveup.setDisable(true);
 								});
 
 							} else {
 								Platform.runLater(() -> {
 									btn1.setDisable(false);
+									btnGiveup.setDisable(false);
 								});
 							}
 
@@ -250,15 +292,46 @@ public class AppController implements Initializable {
 								Money1.setText("보유금액 : " + money[myturn] + "원");
 								Money2.setText("보유금액 : " + money[yourturn] + "원");
 							});
+
+							//SocketConnect.getOutMsg().println("Card/" + card[0] + "/" + card[1]);
+						}else if(rmsg[0].equals("Card")) {
+							card[0]=Integer.parseInt(rmsg[1]);
+							card[1]=Integer.parseInt(rmsg[2]);
+							Platform.runLater(()->{
+								cardcnt1.setText(card[myturn]+"");
+								cardcnt2.setText(card[turn]+"");
+							});
+							
+						} else if(rmsg[0].equals("removeFlag") ) {//SocketConnect.getOutMsg().println("removeFlag/" + i + 1);
+							int i=Integer.parseInt(rmsg[1]);
+							int count=Integer.parseInt(rmsg[2]);
+							
+							Platform.runLater(() -> {
+								for(int j=count;j<planetData.get(i).building.size();j++) {
+									root.getChildren().remove(planetData.get(i).building.get(j));
+									
+								}
+								
+								if(count==0) {
+									planetData.get(i).owner = "X";
+									planetData.get(i).count = 0;
+								}else if(count==1) {
+									planetData.get(i).count = 1;
+								}
+							});
 						}
+						
 						// 소켓
 						// SocketConnect.getOutMsg().println("ChangeLandFlag/" + position[turn] + "/"
 						// +curturn);
+						//SocketConnect.getOutMsg().println("ChangeLandFlag/" + landPosition + "/" + userNum + "/" + changePosition+ "/" +yournum);
 						else if (rmsg[0].equals("ChangeLandFlag") && Integer.parseInt(rmsg[2]) != myturn) {
 							int tp = Integer.parseInt(rmsg[1]);
 							int tt = Integer.parseInt(rmsg[2]);
+							int yourtp = Integer.parseInt(rmsg[3]);
+							int yourtt = Integer.parseInt(rmsg[4]);
 							Platform.runLater(() -> {
-								ChangeLandFlag(tp, tt);
+								ChangeLandFlag(tp, tt , yourtp, yourtt);
 							});
 
 						}
@@ -275,29 +348,58 @@ public class AppController implements Initializable {
 						else if (rmsg[0].equals("NextTurnBre") && Integer.parseInt(rmsg[1]) != myturn) {
 							bre = Integer.parseInt(rmsg[2]);
 						}
+						// 종료
+						else if (rmsg[0].equals("GameResult")) {
+							String winner = rmsg[1];
+							Platform.runLater(()->{
+								gameFinish(winner);
+							});
+						}
 						msg = null;
 					}
 				}
 			}
 		};
+
 		thread.start();
 	}
-
+	
 	public void setMoney(int mymoney, int yourmoney) {
 		money[myturn] += mymoney;
 		money[yourturn] += yourmoney;
 		try {
 			MyMoney.setText("보유금액 : " + money[myturn] + "원");
 		} catch (Exception e) {
+			e.getMessage();
 		}
+		Platform.runLater(() -> {
+			Money1.setText("보유금액 : " + money[myturn] + "원");
+			Money2.setText("보유금액 : " + money[yourturn] + "원");
+		});
 		SocketConnect.getOutMsg().println("Money/" + money[0] + "/" + money[1]);
+		for (int i = 0; i < money.length; i++) {
+			if (money[i]<0) {
+				SocketConnect.getOutMsg().println("GameResult/" + user[(i + 1) % 2] + "/" + user[i] + "/" + 1);
+				break;
+			}			
+		}
+			
+		
 	}
 
 	public void setMyData(String name, int win, int lose) {
-		Platform.runLater(() -> {
-			myName.setText(name);
-			myWinLose.setText("승 : " + win + " 패 : " + lose);
-		});
+		Thread thread = new Thread() {
+			@Override
+			public void run() {
+
+				Platform.runLater(() -> {
+					myName.setText(name);
+					myWinLose.setText("승 : " + win + " 패 : " + lose);
+				});
+			}
+		};
+		thread.setDaemon(true);
+		thread.start();
 	}
 
 	public void setYourData(String name, int win, int lose) {
@@ -339,15 +441,14 @@ public class AppController implements Initializable {
 	}
 
 	public void rollTheDice() {
-		if (doublePopup.isShowing()) {
-			doublePopup.hide();
-		}
+		Double.setVisible(false);
 		Thread thread = new Thread() {
 			@Override
 			public void run() {
 
 				Platform.runLater(() -> {
 					btn1.setDisable(true);
+					btnGiveup.setDisable(true);
 				});
 				Platform.runLater(() -> {
 					setDice();
@@ -364,28 +465,27 @@ public class AppController implements Initializable {
 				if (bre != 0) {
 					if (d1 != d2) {
 						Platform.runLater(() -> {
-							doubleLabel.setText(planetData.get(position[myturn]).name + " 탈출 실패 (더블 일경우 탈출)");
-							doublePopup.show(primaryStage, primaryStage.getX()+200, primaryStage.getY()+600);
+							Double.setText(planetData.get(position[myturn]).name + " 탈출 실패 (더블 일경우 탈출)");
+							Double.setVisible(true);
 						});
 						bre--;
 						turn = yourturn;
 						SocketConnect.getOutMsg().println("ChangeTurn/" + turn);
 						return;
-					}
-					else {
+					} else {
 						bre=0;
 						Platform.runLater(() -> {
-							doubleLabel.setText("탈출 성공 ! 더블!! 한번 더");
-							doublePopup.show(primaryStage, primaryStage.getX()+400, primaryStage.getY()+580);
+							Double.setText("탈출 성공 ! 더블!! 한번 더");
+							Double.setVisible(true);
 						});
 					}
 				} else {
 					if (d1 != d2) {
 						turn = yourturn;
-					} else {						
+					} else {
 						Platform.runLater(() -> {
-							doubleLabel.setText("더블!! 한번 더");
-							doublePopup.show(primaryStage, primaryStage.getX()+400, primaryStage.getY()+580);
+							Double.setText("더블!! 한번 더");
+							Double.setVisible(true);
 						});
 
 					}
@@ -446,9 +546,8 @@ public class AppController implements Initializable {
 			for (int i = 0; i < planetData.size(); i++) {
 				if (user[myturn].equals(planetData.get(i).owner)) {
 					for (int j = 1; j < planetData.get(i).building.size(); j++) {
-						root.getChildren().remove(planetData.get(i).building.get(j));
+						SocketConnect.getOutMsg().println("removeFlag/" + i + "/"+ 1);
 					}
-					planetData.get(i).count = 1;
 				}
 			}
 
@@ -473,6 +572,7 @@ public class AppController implements Initializable {
 			turn=yourturn;
 			setPosition2(posi2, myturn);
 			break;
+
 		case 6:
 			setMoney(-300000, 300000);
 			// 상대편 금액 +30만원 로직 추가해야함. socket으로 +30만원 전송
@@ -488,6 +588,7 @@ public class AppController implements Initializable {
 		case 10:// money[myturn] -= 500000;
 			setMoney(-500000, 0);
 			break;
+
 		case 9:// 당신의 땅과 상대편의 땅을 바꿉니다.
 			takeLand(1);
 			break;
@@ -505,9 +606,7 @@ public class AppController implements Initializable {
 				if (user[myturn].equals(planetData.get(i).owner)) {
 					for (int j = 0; j < planetData.get(i).building.size(); j++) {
 						if (max == planetData.get(i).price) {
-							root.getChildren().remove(planetData.get(i).building.get(j));
-							planetData.get(i).owner = "X";
-							planetData.get(i).count = 0;
+							SocketConnect.getOutMsg().println("removeFlag/" + i + "/" + 0);
 							if (tmp == 0) {
 								int tmoney = ((max + ((max / 2) * (planetData.get(i).building.size() - 1))) / 2);
 								setMoney(-tmoney, 0);
@@ -523,7 +622,7 @@ public class AppController implements Initializable {
 			for (int i = 0; i < planetData.size(); i++) {
 				if (user[myturn].equals(planetData.get(i).owner)) {
 					for (int j = 0; j < planetData.get(i).building.size(); j++) {
-						root.getChildren().remove(planetData.get(i).building.get(j));
+						SocketConnect.getOutMsg().println("removeFlag/" + i + "/" + 0);
 					}
 					planetData.get(i).owner = "X";
 					planetData.get(i).count = 0;
@@ -533,6 +632,7 @@ public class AppController implements Initializable {
 		case 13:
 			setMoney(-money[myturn] - (money[myturn] / 2), 0);
 			break;
+
 		case 14:
 			// 지구로 돌아감. 수고비 받지 못함. 20만원 차감.
 			Cardposi = 3;
@@ -563,6 +663,7 @@ public class AppController implements Initializable {
 			Platform.runLater(() -> {
 				showDialog();
 			});
+
 			break;
 		case 18: // 상대편 금액 -100만원 로직 추가해야함. socket으로 -100만원 전송
 			setMoney(1000000, -1000000);
@@ -573,6 +674,7 @@ public class AppController implements Initializable {
 		case 20: // 건물 두개 지을 땅 선택 (자신의 땅이여야함. 땅이 없을시 무효.)
 			takeLand(3);
 			break;
+
 		case 21:
 			setMoney(100000, 0);
 			break;
@@ -585,17 +687,25 @@ public class AppController implements Initializable {
 		// 서버 소켓..
 		case 23: // 통행료 없이 땅 지나가기
 			card[myturn]++;
-			cardcnt1.setText(card[myturn] + "");
+			Platform.runLater(() -> {
+				cardcnt1.setText(card[myturn] + "");
+				cardcnt2.setText(card[turn] + "");
+			});
+			SocketConnect.getOutMsg().println("Card/" + card[0] + "/" + card[1]);
 			break;
+
 		case 24: // 10만원 내고 비밀 카드 한 장 더 뽑기
 			setMoney(-100000, 0);
 			Platform.runLater(() -> {
 				oneMore();
 			});
 			break;
+
 		case 25: // 상대편 금액 +20만원 로직 추가해야함. socket으로 +20만원 전송
 			setMoney(200000, -200000);
+
 			break;
+
 		case 26: // 주사위 한번 더
 			turn = myturn;
 			break;
@@ -605,13 +715,20 @@ public class AppController implements Initializable {
 		case 28:
 			setMoney(-money[myturn], 0);
 			break;
+
 		case 29:
 			// 5칸 더 앞으로 전진.
 			Cardposi = 6;
 			posi2 = position[myturn];
 			setPosition2(posi2, myturn);
 			break;
+
 		}
+	}
+	
+	public void removeFlag(Object x) {
+		String building=x.toString();
+		SocketConnect.getOutMsg().println("removeFlag/" + building);
 	}
 
 	// 내 턴 아닐때 비밀카드 내용 보여주기
@@ -627,7 +744,7 @@ public class AppController implements Initializable {
 			secretCardList.remove(num);
 		}
 		// 테스트용
-		cardNum = 22;
+		cardNum = 23;
 		System.out.println("cardNum : " + cardNum);
 		System.out.println("secretCardList size : " + secretCardList.size());
 		AnchorPane anchorPane = null;
@@ -642,14 +759,14 @@ public class AppController implements Initializable {
 		Image img = new Image("file:../../resources/images/secretCard/" + imgName);
 		secretCard.setImage(img);
 		Button Complete = (Button) anchorPane.lookup("#Complete");
-		int tmp = cardNum;
+		//int tmp = cardNum;
 		Complete.setOnAction(event -> {
 			dialog.close();
 			// 5 7 14 16 17 22 29
 			if (myturn==actionTurn) {
 				SocketConnect.getOutMsg().println("ChangeTurn/" + turn);
 			}
-			
+			checkdialog.remove(dialog);
 
 		});
 		dialog.setAlwaysOnTop(true);
@@ -661,6 +778,7 @@ public class AppController implements Initializable {
 		dialog.setX(primaryStage.getX() + 260);
 		dialog.setY(primaryStage.getY() + 59.5);
 		dialog.show();
+		checkdialog.add(dialog);
 	}
 
 	public int setSecretCardNum() {
@@ -680,7 +798,7 @@ public class AppController implements Initializable {
 //      }else {
 //         d1 = 2;
 //         d2 = 3;
-//      }
+//      }		
 	}
 
 	public void setDiceImage() {
@@ -690,6 +808,31 @@ public class AppController implements Initializable {
 		DiceImg1.setImage(img);
 		DiceImg2.setImage(img2);
 
+	}
+	public void gameFinish(String winner) {
+		Stage dialog = new Stage(StageStyle.UTILITY);
+		dialog.initModality(Modality.WINDOW_MODAL);
+		AnchorPane anchorPane = null;
+		try {
+			anchorPane = (AnchorPane) FXMLLoader.load(getClass().getResource("fin_dialog.fxml"));
+		} catch (IOException e2) {
+			e2.printStackTrace();
+		}
+		Label FinMessage = (Label) anchorPane.lookup("#FinMessage");
+		Button FinButton = (Button) anchorPane.lookup("#FinButton");
+		FinMessage.setText(winner+" 승리");
+		FinButton.setOnAction(e->{
+			dialog.close();
+			SocketConnect.getOutMsg().println("GameFinish");
+			primaryStage.close();
+		});
+		Scene scene = new Scene(anchorPane);
+		dialog.setScene(scene);
+		dialog.setAlwaysOnTop(true);
+		dialog.show();
+		for (int i = 0; i < checkdialog.size(); i++) {
+			checkdialog.get(i).close();			
+		}
 	}
 
 	public void showDialog() {
@@ -720,22 +863,21 @@ public class AppController implements Initializable {
 
 			Label BuyMessage = (Label) anchorPane.lookup("#BuyMessage");
 			MyMoney = (Label) anchorPane.lookup("#MyMoney");
-
-			if (money[myturn] < price + (price / 2) * (count - 1)) {
-				BuyMessage.setText("보유금액이 부족합니다.");
-
-			} else {
-				BuyMessage.setText(name + "의 통행료 " + (price + (price/2)*(count-1)) + "원을 지불을 하였습니다.");
-				setMoney(-price + (price/2)*(count-1), price + (price/2)*(count-1));
-			}
-
+			
+			BuyMessage.setText(name + "의 통행료 " + (price + (price/2)*(count-1)) + "원을 지불을 하였습니다.");
+			setMoney(-price + (price/2)*(count-1), price + (price/2)*(count-1));
+			
 			Button Complete = (Button) anchorPane.lookup("#Complete");
-			Complete.setOnAction(event -> dialog.close());
+			Complete.setOnAction(event -> {
+				dialog.close();
+				checkdialog.remove(dialog);
+			});
 
 			Scene scene = new Scene(anchorPane);
 			dialog.setScene(scene);
 			dialog.setAlwaysOnTop(true);
 			dialog.show();
+			checkdialog.add(dialog);
 
 		} // 이용료 지불 끝
 
@@ -787,16 +929,18 @@ public class AppController implements Initializable {
 				}
 
 				BuyPlanet.setOnAction(event -> {
-					BuyLand(name, owner, data, price);
+					BuyLand(name, owner, price);
 				});
 				Button Complete = (Button) anchorPane.lookup("#Complete");
 				if (name.equals("워프")) {
 					setWarp(anchorPane, dialog2);
 					Complete.setVisible(false);
 				} else if (name.equals("조난기지")) {
+					setMoney(-500000,0);
 					bre = 1;
 					turn=yourturn;
 				} else if (name.equals("블랙홀")) {
+					bre = 2;
 					turn=yourturn;
 				} else {
 					Complete.setVisible(true);
@@ -804,11 +948,13 @@ public class AppController implements Initializable {
 				Complete.setOnAction(event -> {
 					dialog2.close();
 					SocketConnect.getOutMsg().println("ChangeTurn/" + turn);
+					checkdialog.remove(dialog2);
 
 				});
 				Scene scene = new Scene(anchorPane);
 				dialog2.setScene(scene);
 				dialog2.show();
+				checkdialog.add(dialog2);
 			}
 		} catch (IOException e2) {
 			e2.printStackTrace();
@@ -858,34 +1004,65 @@ public class AppController implements Initializable {
 	}
 
 	// 상대땅 가져올때 설치되어 있는 플래그들 변경 함수
-	public void ChangeLandFlag(int landPosition, int userNum) {
+	public void ChangeLandFlag(int landPosition, int userNum , int changePosition, int yournum) {
 		System.out.println(userNum + "," + landPosition);
 		for (int i = 0; i < planetData.get(landPosition).building.size(); i++) {
-			root.getChildren().remove(planetData.get(landPosition).building.get(i));
-			if (userNum == 0) {
-				if (i == 0) {
-					Image im = new Image("file:../../resources/images/flag" + (userNum + 1) + ".PNG");
-					((ImageView) planetData.get(landPosition).building.get(i)).setImage(im);
+			
+			//상대편 땅에 있는 깃발 과 빌딩 색깔 바꿈.
+			if(yournum == -1 || yournum != -1) {
+				root.getChildren().remove(planetData.get(landPosition).building.get(i));
+				if (userNum == 0) {
+					if (i == 0) {
+						Image im = new Image("file:../../resources/images/flag" + (userNum + 1) + ".PNG");
+						((ImageView) planetData.get(landPosition).building.get(i)).setImage(im);
+					} else {
+						((Rectangle) planetData.get(landPosition).building.get(i)).setFill(Color.DODGERBLUE);
+					}
+					planetData.get(landPosition).owner = user[userNum];
 				} else {
-					((Rectangle) planetData.get(landPosition).building.get(i)).setFill(Color.DODGERBLUE);
+					if (i == 0) {
+						Image im = new Image("file:../../resources/images/flag" + (userNum + 1) + ".PNG");
+						((ImageView) planetData.get(landPosition).building.get(i)).setImage(im);
+					} else {
+						((Rectangle) planetData.get(landPosition).building.get(i)).setFill(Color.RED);
+					}
+					planetData.get(landPosition).owner = user[userNum];
 				}
-				planetData.get(landPosition).owner = user[userNum];
-			} else {
-				if (i == 0) {
-					Image im = new Image("file:../../resources/images/flag" + (userNum + 1) + ".PNG");
-					((ImageView) planetData.get(landPosition).building.get(i)).setImage(im);
-				} else {
-					((Rectangle) planetData.get(landPosition).building.get(i)).setFill(Color.RED);
+				root.getChildren().add((Node) planetData.get(landPosition).building.get(i));
+			}
+			
+			//youtnum = -1일 경우 상대편 땅을 내땅으로 바꿈.
+			//yournum != -1일 경우 상대편 당과 내땅 체인지.
+			if(yournum != -1) {
+				root.getChildren().remove(planetData.get(changePosition).building.get(i));
+				if(yournum == 0) {
+					if (i == 0) {
+						Image im = new Image("file:../../resources/images/flag" + (yournum + 1) + ".PNG");
+						((ImageView) planetData.get(changePosition).building.get(i)).setImage(im);
+					} else {
+						((Rectangle) planetData.get(changePosition).building.get(i)).setFill(Color.DODGERBLUE);
+					}
+					planetData.get(changePosition).owner = user[yournum];
+					
+				}else if(yournum == 1) {
+					if (i == 0) {
+						Image im = new Image("file:../../resources/images/flag" + (yournum + 1) + ".PNG");
+						((ImageView) planetData.get(changePosition).building.get(i)).setImage(im);
+					} else {
+						((Rectangle) planetData.get(changePosition).building.get(i)).setFill(Color.RED);
+					}
 				}
-				planetData.get(landPosition).owner = user[userNum];
+					planetData.get(changePosition).owner = user[yournum];
+					root.getChildren().add((Node) planetData.get(changePosition).building.get(i));
 			}
 
-			root.getChildren().add((Node) planetData.get(landPosition).building.get(i));
+			
 		}
 
 		if (myturn == userNum) {
 			// 소켓
-			SocketConnect.getOutMsg().println("ChangeLandFlag/" + landPosition + "/" + userNum);
+			SocketConnect.getOutMsg().println("ChangeLandFlag/" + landPosition + "/" + userNum + "/" + changePosition+ "/" +yournum);
+		
 		}
 
 	}
@@ -993,8 +1170,7 @@ public class AppController implements Initializable {
 	}
 
 	public void pass() { // 통행료 없이 지나가기 함수.
-		AnchorPane anchorPane = null;
-		Stage stage;
+		AnchorPane anchorPane = null;		
 		Stage pass = new Stage(StageStyle.UTILITY);
 		pass.initModality(Modality.WINDOW_MODAL);
 		pass.initOwner(primaryStage);
@@ -1004,7 +1180,6 @@ public class AppController implements Initializable {
 			anchorPane = (AnchorPane) FXMLLoader.load(getClass().getResource("pass.fxml"));
 
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		Button Y = (Button) anchorPane.lookup("#Y");
@@ -1015,6 +1190,7 @@ public class AppController implements Initializable {
 			public void handle(ActionEvent e) {
 				Platform.runLater(() -> {
 					card[myturn]--;
+					SocketConnect.getOutMsg().println("Card/" + card[0] + "/" + card[1]);
 					cardcnt1.setText(card[myturn] + "");
 
 					cardpass = 0;
@@ -1025,12 +1201,12 @@ public class AppController implements Initializable {
 
 						passpopup.getContent().add(FXMLLoader.load(getClass().getResource("passpopup.fxml")));
 						passpopup.show(primaryStage);
-					} catch (IOException e1) {
-						// TODO Auto-generated catch block
+					} catch (IOException e1) {						
 						e1.printStackTrace();
 					}
 					cardpass = 2;
 					pass.close();
+					SocketConnect.getOutMsg().println("ChangeTurn/" + turn);
 
 				});
 			}
@@ -1040,12 +1216,14 @@ public class AppController implements Initializable {
 			public void handle(ActionEvent e) {
 				showDialog();
 				pass.close();
+				SocketConnect.getOutMsg().println("ChangeTurn/" + turn);
 			}
 		});
 
 		Scene scene = new Scene(anchorPane);
 		pass.setScene(scene);
 		pass.show();
+		
 	}
 
 	public void oneMore() {
@@ -1059,16 +1237,12 @@ public class AppController implements Initializable {
 		try {
 			anchorPane = (AnchorPane) FXMLLoader.load(getClass().getResource("dialog3.fxml"));
 
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
+		} catch (IOException e) {			
 			e.printStackTrace();
-		}
-		Label secretCard1 = (Label) anchorPane.lookup("#secretCard1");
-		Label secretCard2 = (Label) anchorPane.lookup("#secretCard2");
+		}		
 		Button Yes = (Button) anchorPane.lookup("#Yes");
-		;
+		
 		Button No = (Button) anchorPane.lookup("#No");
-		;
 
 		Yes.setOnAction((EventHandler<ActionEvent>) new EventHandler<ActionEvent>() {
 			@Override
@@ -1289,6 +1463,8 @@ public class AppController implements Initializable {
 
 	// 비밀카드로 땅 교환시 동작 함수
 	private void changeLand(ChoiceBox<String> choiceYourBox, ChoiceBox<String> choiceMyBox) {
+		int position1=0;
+		int position2=0;
 		String[] name = { choiceYourBox.getValue(), choiceMyBox.getValue() };
 		// System.out.println(myturn + "," + nextTurn + ":" + name[0] + "," + name[1]);
 		if (name[0] == null || name[1] == null) {
@@ -1296,10 +1472,16 @@ public class AppController implements Initializable {
 		}
 
 		for (int i = 0; i < planetData.size(); i++) {
-			if (planetData.get(i).name.equals(name[myturn])) { // 선택한 상대 땅일때 동작
-				ChangeLandFlag(i, yourturn); // 땅 가져올때 플래그들 변경 함수
+			if (planetData.get(i).name.equals(name[0])) { // 선택한 상대 땅일때 동작
+				 // 땅 가져올때 플래그들 변경 함수
+				position1 = i;
 			}
-
+			if(planetData.get(i).name.equals(name[1])) {
+				position2 = i;
+			}
+			
+			ChangeLandFlag(position1, myturn , position2, yourturn);
+			
 			choiceLand.setVisible(false);
 		}
 
@@ -1307,8 +1489,7 @@ public class AppController implements Initializable {
 
 	// 비밀카드로 땅 선택시 동작 함수
 	private void getChoice(ChoiceBox<String> choiceBox, int index) {
-		String name = choiceBox.getValue();
-		ImageView flag = new ImageView();
+		String name = choiceBox.getValue();		
 
 		if (name == null) {
 			return;
@@ -1330,7 +1511,7 @@ public class AppController implements Initializable {
 				} else {
 					// 플래그 추가 혹은 변경
 					if (!planetData.get(i).owner.equals("X")) { // 상대땅 가져오기 일때만 기존 플레그 제거
-						ChangeLandFlag(i, myturn); // 땅 가져올대 플래그들 변경 함수
+						ChangeLandFlag(i, myturn , -1 , -1); // 땅 가져올대 플래그들 변경 함수
 					} else {
 						setFlag(i, myturn); // 플래그 설치 함수
 
@@ -1344,7 +1525,8 @@ public class AppController implements Initializable {
 		choiceLand.setVisible(false);
 	}
 
-	public void BuyLand(String name, String owner, String data, int price) {
+	public void BuyLand(String name, String owner, int price) {
+
 		Stage dialog = new Stage(StageStyle.UTILITY);
 		dialog.initModality(Modality.WINDOW_MODAL);
 		dialog.initOwner(primaryStage);
@@ -1383,7 +1565,7 @@ public class AppController implements Initializable {
 				PlanetOwner.setText(user[myturn]);
 			}
 			if (!planetData.get(position[myturn]).owner.equals(user[myturn])) { // 내땅이 아닐경우
-				ChangeLandFlag(position[myturn], myturn); // 땅 가져올대 플래그들 변경 함수
+				ChangeLandFlag(position[myturn], myturn , -1, -1); // 땅 가져올대 플래그들 변경 함수
 				setMoney(-cost, cost);
 				PlanetOwner.setText(user[myturn]);
 				BuyMessage.setText("구매 완료하였습니다.");
@@ -1409,7 +1591,7 @@ public class AppController implements Initializable {
 				} else {
 					int locate[] = { -33, - 10, 13 };
 					setBuilding(position[myturn], locate[planetData.get(position[myturn]).count - 1], myturn); // 건물 설치
-																												// 함수 호출
+					// 함수 호출
 					BuyMessage.setText("구매 완료하였습니다.");
 					setMoney(-(price / 2), 0);
 				}
