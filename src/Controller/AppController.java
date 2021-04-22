@@ -68,7 +68,6 @@ public class AppController implements Initializable {
 	int d1;
 	int d2;
 
-	int cardNum = 1; // test용
 	int Cardposi = 0; // 카드로 나온 포지션.
 	int bre = 0;
 
@@ -221,19 +220,14 @@ public class AppController implements Initializable {
 							}
 							ready = 1;
 						} else if (rmsg[0].equals("Dice")) {
-							int movedice = Integer.parseInt(rmsg[2]);
-							d1 = Integer.parseInt(rmsg[3]);
-							d2 = Integer.parseInt(rmsg[4]);
+							int movedice = Integer.parseInt(rmsg[1]);
+							d1 = Integer.parseInt(rmsg[2]);
+							d2 = Integer.parseInt(rmsg[3]);
 
-							if (Integer.parseInt(rmsg[1]) != myturn) {
-								System.out.println("내턴 아님...");
-								Platform.runLater(() -> {
-									setDiceImage();
-									moveDice(d1 + d2, movedice);
-								});
-							}
-							System.out.println("현재턴:" + turn);
-
+							Platform.runLater(() -> {
+								setDiceImage();
+								moveDice(d1 + d2, movedice);
+							});
 						}
 						// ChangeTurn/turn
 						else if (rmsg[0].equals("ChangeTurn")) {
@@ -252,19 +246,15 @@ public class AppController implements Initializable {
 							}
 
 						}
-						// SocketConnect.getOutMsg().println("MoveDice/" +myturn+"/"+ movedice + "/" +
-						// movecount);
-						else if (rmsg[0].equals("MoveDice") && Integer.parseInt(rmsg[1]) != myturn) {
-							int movedice = Integer.parseInt(rmsg[2]);
-							int movecount = Integer.parseInt(rmsg[3]);
+						else if (rmsg[0].equals("MoveDice")){
+							int movedice = Integer.parseInt(rmsg[1]);
+							int movecount = Integer.parseInt(rmsg[2]);
 							Platform.runLater(() -> {
 								moveDice(movecount, movedice);
 							});
 
 						}
-						// 소켓
-						// SocketConnect.getOutMsg().println("SetFlag/"+position[turn]+"/"+curturn);
-						else if (rmsg[0].equals("SetFlag") && Integer.parseInt(rmsg[2]) != myturn) {
+						else if (rmsg[0].equals("SetFlag")) {
 							int tp = Integer.parseInt(rmsg[1]);
 							int tt = Integer.parseInt(rmsg[2]);
 							Platform.runLater(() -> {
@@ -272,14 +262,10 @@ public class AppController implements Initializable {
 							});
 
 						}
-						// 소켓
-						// SocketConnect.getOutMsg()
-						// .println("SetBuilding/" + position[turn] + "/" +myturn+"/"+usernum+"/"+
-						// locate);
-						else if (rmsg[0].equals("SetBuilding") && Integer.parseInt(rmsg[2]) != myturn) {
+						else if (rmsg[0].equals("SetBuilding")){
 							int position = Integer.parseInt(rmsg[1]);
-							int curturn = Integer.parseInt(rmsg[3]);
-							int locate = Integer.parseInt(rmsg[4]);
+							int curturn = Integer.parseInt(rmsg[2]);
+							int locate = Integer.parseInt(rmsg[3]);
 							Platform.runLater(() -> {
 								setBuilding(position, locate, curturn);
 
@@ -293,7 +279,6 @@ public class AppController implements Initializable {
 								Money2.setText("보유금액 : " + money[yourturn] + "원");
 							});
 
-							//SocketConnect.getOutMsg().println("Card/" + card[0] + "/" + card[1]);
 						}else if(rmsg[0].equals("Card")) {
 							card[0]=Integer.parseInt(rmsg[1]);
 							card[1]=Integer.parseInt(rmsg[2]);
@@ -302,7 +287,7 @@ public class AppController implements Initializable {
 								cardcnt2.setText(card[turn]+"");
 							});
 							
-						} else if(rmsg[0].equals("removeFlag") ) {//SocketConnect.getOutMsg().println("removeFlag/" + i + 1);
+						} else if(rmsg[0].equals("removeFlag") ) {
 							int i=Integer.parseInt(rmsg[1]);
 							int count=Integer.parseInt(rmsg[2]);
 							
@@ -321,11 +306,7 @@ public class AppController implements Initializable {
 							});
 						}
 						
-						// 소켓
-						// SocketConnect.getOutMsg().println("ChangeLandFlag/" + position[turn] + "/"
-						// +curturn);
-						//SocketConnect.getOutMsg().println("ChangeLandFlag/" + landPosition + "/" + userNum + "/" + changePosition+ "/" +yournum);
-						else if (rmsg[0].equals("ChangeLandFlag") && Integer.parseInt(rmsg[2]) != myturn) {
+						else if (rmsg[0].equals("ChangeLandFlag")) {
 							int tp = Integer.parseInt(rmsg[1]);
 							int tt = Integer.parseInt(rmsg[2]);
 							int yourtp = Integer.parseInt(rmsg[3]);
@@ -336,7 +317,7 @@ public class AppController implements Initializable {
 
 						}
 						// 내턴 아닐때 비밀카드 보여주기
-						else if (rmsg[0].equals("ShowSecretCard") && Integer.parseInt(rmsg[1]) != myturn) {
+						else if (rmsg[0].equals("ShowSecretCard")) {
 							int tturn = Integer.parseInt(rmsg[1]);
 							int num = Integer.parseInt(rmsg[2]);
 							Platform.runLater(() -> {
@@ -345,8 +326,8 @@ public class AppController implements Initializable {
 
 						}
 						// 상대방 쉬게만드는 경우
-						else if (rmsg[0].equals("NextTurnBre") && Integer.parseInt(rmsg[1]) != myturn) {
-							bre = Integer.parseInt(rmsg[2]);
+						else if (rmsg[0].equals("NextTurnBre")) {
+							bre = Integer.parseInt(rmsg[1]);
 						}
 						// 종료
 						else if (rmsg[0].equals("GameResult")) {
@@ -376,15 +357,11 @@ public class AppController implements Initializable {
 			Money1.setText("보유금액 : " + money[myturn] + "원");
 			Money2.setText("보유금액 : " + money[yourturn] + "원");
 		});
-		SocketConnect.getOutMsg().println("Money/" + money[0] + "/" + money[1]);
-		for (int i = 0; i < money.length; i++) {
-			if (money[i]<0) {
-				SocketConnect.getOutMsg().println("GameResult/" + user[(i + 1) % 2] + "/" + user[i] + "/" + 1);
-				break;
-			}			
+		SocketConnect.getOutMsg().println("Money/" + money[0] + "/" + money[1]);		
+		if (money[myturn]<0) {
+			gameFinish(user[yourturn]);
+			SocketConnect.getOutMsg().println("GameResult/" + user[yourturn] + "/" + user[myturn]);
 		}
-			
-		
 	}
 
 	public void setMyData(String name, int win, int lose) {
@@ -490,7 +467,7 @@ public class AppController implements Initializable {
 
 					}
 				}
-				SocketConnect.getOutMsg().println("Dice/" + myturn + "/" + myturn + "/" + d1 + "/" + d2);
+				SocketConnect.getOutMsg().println("Dice/" + myturn + "/" + d1 + "/" + d2);
 				path = new Path();
 				Platform.runLater(() -> {
 					for (int i = 0; i < d1 + d2; i++) {
@@ -682,7 +659,8 @@ public class AppController implements Initializable {
 			Cardposi = 1;
 			posi2 = position[yourturn];
 			setPosition2(posi2, yourturn);
-			SocketConnect.getOutMsg().println("NextTurnBre/" + myturn + "/" + 1);
+			SocketConnect.getOutMsg().println("NextTurnBre/" + 1);
+			setMoney(0,-500000);
 			break;
 		// 서버 소켓..
 		case 23: // 통행료 없이 땅 지나가기
@@ -744,7 +722,7 @@ public class AppController implements Initializable {
 			secretCardList.remove(num);
 		}
 		// 테스트용
-		cardNum = 23;
+//		cardNum = 23;
 		System.out.println("cardNum : " + cardNum);
 		System.out.println("secretCardList size : " + secretCardList.size());
 		AnchorPane anchorPane = null;
@@ -997,8 +975,7 @@ public class AppController implements Initializable {
 		planetData.get(landPosition).count++;
 		if (myturn == usernum) {
 			// 소켓
-			SocketConnect.getOutMsg()
-					.println("SetBuilding/" + landPosition + "/" + myturn + "/" + usernum + "/" + located);
+			SocketConnect.getOutMsg().println("SetBuilding/" + landPosition + "/" + usernum + "/" + located);
 		}
 
 	}
@@ -1140,7 +1117,7 @@ public class AppController implements Initializable {
 		Thread thread = new Thread() {
 			@Override
 			public void run() {
-				SocketConnect.getOutMsg().println("MoveDice/" + myturn + "/" + movedice + "/" + movecount);
+				SocketConnect.getOutMsg().println("MoveDice/" + movedice + "/" + movecount);
 				path = new Path();
 				Platform.runLater(() -> {
 
@@ -1316,7 +1293,7 @@ public class AppController implements Initializable {
 				path = new Path();
 				Platform.runLater(() -> {
 
-					SocketConnect.getOutMsg().println("MoveDice/" + myturn + "/" + myturn + "/" + movecount);
+					SocketConnect.getOutMsg().println("MoveDice/" + myturn + "/" + movecount);
 					for (int i = 0; i < movecount; i++) {
 						setPosition(myturn);
 					}

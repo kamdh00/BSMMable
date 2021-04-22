@@ -37,7 +37,7 @@ public class Main extends Application {
 	}
 
 	@Override
-	public void init() throws Exception {
+	public void init() throws Exception {		
 		SocketConnect = new PlayerClient("127.0.0.1");
 		FXMLLoader loginLoader = new FXMLLoader(getClass().getResource("Login.fxml"));
 		login = loginLoader.load();
